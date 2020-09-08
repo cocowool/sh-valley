@@ -16,3 +16,5 @@ bootstrap.memory_lock: false
 bootstrap.system_call_filter: false
 
 xpack.monitoring.collection.enabled: true
+
+# logger.org.elasticsearch.transport: trace
