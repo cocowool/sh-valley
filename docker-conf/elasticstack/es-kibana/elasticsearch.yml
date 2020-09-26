@@ -19,19 +19,20 @@ xpack.monitoring.collection.enabled: true
 
 # logger.org.elasticsearch.transport: trace
 
-# 记录获取慢日志
-index.search.slowlog.threshold.fetch.warn: 1s
-index.search.slowlog.threshold.fetch.info: 200ms
-index.search.slowlog.threshold.fetch.debug: 60ms
-index.search.slowlog.threshold.fetch.trace: 50ms
-# 记录查询慢日志
-index.search.slowlog.threshold.query.warn: 1s
-index.search.slowlog.threshold.query.debug: 500ms
+# 从5.x 版本以后，慢查询日志只能设置在索引级别，无法设置全局的阈值
+# # 记录获取慢日志
+# index.search.slowlog.threshold.fetch.warn: 1s
+# index.search.slowlog.threshold.fetch.info: 200ms
+# index.search.slowlog.threshold.fetch.debug: 60ms
+# index.search.slowlog.threshold.fetch.trace: 50ms
+# # 记录查询慢日志
+# index.search.slowlog.threshold.query.warn: 1s
+# index.search.slowlog.threshold.query.debug: 500ms
 
-# 索引慢日志
-index.search.slowlog.threshold.index.warn: 10s
-index.search.slowlog.threshold.index.info: 5s
-index.search.slowlog.threshold.index.debug: 2s
-index.search.slowlog.threshold.index.trace: 500ms
-index.search.slowlog.level: trace
-index.search.slowlog.source: 1000
+# # 索引慢日志
+# index.search.slowlog.threshold.index.warn: 10s
+# index.search.slowlog.threshold.index.info: 5s
+# index.search.slowlog.threshold.index.debug: 2s
+# index.search.slowlog.threshold.index.trace: 500ms
+# index.search.slowlog.level: trace
+# index.search.slowlog.source: 1000
