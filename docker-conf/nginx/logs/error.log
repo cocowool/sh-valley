@@ -1,3 +1,6 @@
 
 2020/11/23 03:41:45 [emerg] 1#1: unexpected "}" in /etc/nginx/nginx.conf:47
 2020/11/23 05:40:23 [emerg] 1#1: invalid number of arguments in "root" directive in /etc/nginx/nginx.conf:41
+2020/11/23 05:53:24 [error] 28#28: *5 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 172.28.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2020/11/23 05:53:28 [error] 28#28: *5 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 172.28.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2020/11/23 06:02:39 [error] 28#28: *3 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 192.168.0.1, server: , request: "GET /favicon.ico HTTP/1.1", host: "localhost", referrer: "http://localhost/"
