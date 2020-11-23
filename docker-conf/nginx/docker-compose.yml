@@ -11,5 +11,6 @@ services:
       - ~/Projects/sh-valley/docker-conf/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
 #      - ~/Projects/sh-valley/docker-conf/nginx/conf.d:/etc/nginx/conf.d
       - ~/Projects/sh-valley/docker-conf/nginx/www:/usr/share/nginx/html
+      - ~/Projects/sh-valley/docker-conf/nginx/www/www.hexo.com:/usr/share/nginx/html/www.hexo.com
       - ~/Projects/sh-valley/docker-conf/nginx/logs:/var/log/nginx
 

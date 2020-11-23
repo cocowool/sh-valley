@@ -1,2 +1,4 @@
 
 172.20.0.1 - - [23/Nov/2020:03:28:48 +0000] "GET / HTTP/1.1" 200 70 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15" "-"
+172.28.0.1 - - [23/Nov/2020:05:45:44 +0000] "GET / HTTP/1.1" 200 70 "-" "curl/7.64.1" "-"
+172.28.0.1 - - [23/Nov/2020:05:46:01 +0000] "GET / HTTP/1.1" 200 70 "-" "curl/7.64.1" "-"
