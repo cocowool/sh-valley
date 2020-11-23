@@ -1,9 +1,18 @@
 class practice1 {
-    public static void main(String args[]){
-        int x = new int;
-        char y;
+    int i;
+    char x;
 
-        System.out.println("hello world");
-        System.out.println(x);
+    public int getI() {
+        return i;
+    }
+
+    public char getX(){
+        return x;
+    }
+
+    public static void main(String args[]){
+
+        System.out.println( new practice1().getI() );
+        System.out.println( new practice1().getX() );
     }
 }
