@@ -3,26 +3,28 @@ services:
   redis-master:
     image: redis:6.2.0
     hostname: redis-master
-    expose: 
-      - "9001"
-    ports:
-      - "9200:9200"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    # expose: 
+    #   - "6319"
+    # ports:
+    #   - "6319:6319"
     volumes:
-      - ~/Projects/sh-valley/docker-conf/redis-cluster/redis_master.conf:/usr/local/etc/redis/redis.conf
-      - ~/Projects/sh-valley/docker-conf/reids-cluster/data-master:/data
+      - ~/Projects/sh-valley/docker-conf/redis-cluster/master-slave/redis_master.conf:/usr/local/etc/redis/redis.conf
+      - ~/Projects/sh-valley/docker-conf/reids-cluster/master-slave/data-master:/data
     networks:
-      es-cluster-network:
+      redis-network:
         ipv4_address: 172.25.0.11
   redis-slave:
     image: redis:6.2.0
     hostname: redis-slave
-    ports:
-      - "5601:5601"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    # ports:
+    #   - "6319:6319"
     volumes:
-      - ~/Projects/sh-valley/docker-conf/redis-cluster/redis_slave.conf:/usr/local/etc/redis/redis.conf
-      - ~/Projects/sh-valley/docker-conf/reids-cluster/data-slave:/data
+      - ~/Projects/sh-valley/docker-conf/redis-cluster/master-slave/redis_slave.conf:/usr/local/etc/redis/redis.conf
+      - ~/Projects/sh-valley/docker-conf/reids-cluster/master-slave/data-slave:/data
     networks:
-      es-cluster-network:
+      redis-network:
         ipv4_address: 172.25.0.12
 networks:
   redis-network:
