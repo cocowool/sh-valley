@@ -10,7 +10,7 @@ services:
     #   - "6319:6319"
     volumes:
       - ~/Projects/sh-valley/docker-conf/redis-cluster/master-slave/redis_master.conf:/usr/local/etc/redis/redis.conf
-      - ~/Projects/sh-valley/docker-conf/reids-cluster/master-slave/data-master:/data
+      - ~/Projects/sh-valley/docker-conf/redis-cluster/master-slave/data-master:/data
     networks:
       redis-network:
         ipv4_address: 172.25.0.11
@@ -22,7 +22,7 @@ services:
     #   - "6319:6319"
     volumes:
       - ~/Projects/sh-valley/docker-conf/redis-cluster/master-slave/redis_slave.conf:/usr/local/etc/redis/redis.conf
-      - ~/Projects/sh-valley/docker-conf/reids-cluster/master-slave/data-slave:/data
+      - ~/Projects/sh-valley/docker-conf/redis-cluster/master-slave/data-slave:/data
     networks:
       redis-network:
         ipv4_address: 172.25.0.12
