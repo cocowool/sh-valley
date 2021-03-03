@@ -4,9 +4,11 @@ This repository is used to keep my example projects. Welcome contact me to get m
 
 这个仓库用来记录自己示例工程代码，包括但不限于shell、java、python等等。欢迎大家与我一起沟通讨论。
 
-## Docker 相关配置
+## Docker 相关案例
 
-Docker 使得我们在本地配置一些测试环境变得非常容易，而且非常节省资源。
+Docker 使得我们在本地配置一些测试环境变得非常容易，而且非常节省资源。本列表提供基于 Docker 快速搭建各种环境的文章。
+
+* [基于Docker快速构建Redis主从模式集群]()
 
 ## shell 脚本
 
