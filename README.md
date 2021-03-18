@@ -8,7 +8,7 @@ This repository is used to keep my example projects. Welcome contact me to get m
 
 Docker 使得我们在本地配置一些测试环境变得非常容易，而且非常节省资源。本列表提供基于 Docker 快速搭建各种环境的文章。
 
-* [基于Docker快速构建Redis主从模式集群]()
+* [基于Docker快速构建Redis主从模式集群](http://edulinks.cn/2021/02/27/20210301-docker-redis/)
 
 ## shell 脚本
 
@@ -20,6 +20,10 @@ Docker 使得我们在本地配置一些测试环境变得非常容易，而且�
 
 [生产者每10秒产生一百条数据](https://github.com/cocowool/sh-valley/tree/master/java/java-kafka)
 [消费者获取分区列表，并获取分区最新的OFFSET](https://github.com/cocowool/sh-valley/tree/master/java/java-kafka)
+
+## C 相关案例
+
+[动态链接库*.so的编译与使用](http://edulinks.cn/2021/03/18/20210318-dynamic-lib-usage/)
 
 # Contact
 
