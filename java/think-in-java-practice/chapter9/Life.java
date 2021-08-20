@@ -1,3 +1,4 @@
+// page 171, practise 3
 abstract class People {
     People(){
         print();
