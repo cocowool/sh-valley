@@ -1,3 +1,4 @@
+// page 171, practise 2
 abstract class House {
 
 }
