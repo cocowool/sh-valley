@@ -17,6 +17,9 @@ if [[ $# == 0 ]] || [[ "$1" == "-h" ]]; then
   exit 0
 fi
 
+# INCLUDE_FILE_TYPE=""
+# EXCLUDE_FILE_TYPE=""
+
 # echo $*
 while getopts "p:t:x:" opt
 do
@@ -24,10 +27,10 @@ do
     p) 
       FOLDER_PATH=$OPTARG ;;
     t) 
-      echo "Found t option"
+      # echo "Found t option"
       INCLUDE_FILE_TYPE=$OPTARG ;;
     x)
-      echo "Found x option"
+      # echo "Found x option"
       EXCLUDE_FILE_TYPE=$OPTARG ;;
     # getopts doesn't support long option, such as --option
     # debug)
@@ -45,11 +48,11 @@ echo "查找的文件路径为：$FOLDER_PATH"
 
 if [ -n $FOLDER_PATH ]; then
   #list=`find $FOLDER_PATH | grep "jpg"`
-  if [ -n $INCLUDE_FILE_TYPE ]; then
+  if [ -n "$INCLUDE_FILE_TYPE" ]; then
     echo "查找的文件后缀为：$INCLUDE_FILE_TYPE."
-    list=`find $FOLDER_PATH -type f ! -name "*.html"`
-  elif [ -n $EXCLUDE_FILE_TYPE ]; then
-    echo "查找文件后缀不是：$INCLUDE_FILE_TYPE 的文件"
+    list=`find $FOLDER_PATH -type f -name "*.$INCLUDE_FILE_TYPE"`
+  elif [ -n "$EXCLUDE_FILE_TYPE" ]; then
+    echo "查找文件后缀不是：$EXCLUDE_FILE_TYPE 的文件"
     list=`find $FOLDER_PATH -type f ! -name "*.$EXCLUDE_FILE_TYPE"`
   fi
 
