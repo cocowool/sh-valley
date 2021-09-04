@@ -12,13 +12,25 @@ help() {
   exit 0
 }
 
-# use set command to parse option and parameter
-set -- $(getopt p:t:x: "$@")
-
 if [[ $# == 0 ]] || [[ "$1" == "-h" ]]; then
   help
   exit 0
 fi
+
+while getopts :p:t:x opt
+do
+  case "$opt" in
+    -p) echo "Found -p option" ;;
+    -t) echo "Found -t option" ;;
+    -x) echo "Found -x option" ;;
+    *) echo "$opt is invalid option" ;;
+  esac
+done
+
+exit 0
+
+# use set command to parse option and parameter
+set -- $(getopt p:t:x: "$@")
 
 while [ -n "$1" ]
 do
