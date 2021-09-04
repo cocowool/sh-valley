@@ -12,6 +12,9 @@ help() {
   exit 0
 }
 
+# use set command to parse option and parameter
+set -- $(getopt p:t:x: "$@")
+
 if [[ $# == 0 ]] || [[ "$1" == "-h" ]]; then
   help
   exit 0
@@ -26,6 +29,13 @@ do
     *) echo "$1 is invalid option" ;;
   esac
   shift
+done
+
+count=1
+for param in $@
+do
+  echo "Parameter #$count: $param"
+  count=$[$count + 1]
 done
 
 exit 0
