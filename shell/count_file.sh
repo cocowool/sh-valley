@@ -3,7 +3,10 @@
 # 统计一个目录下指定类型或限制某种类型以外的文件的大小，包括子目录
 
 help() {
-  echo "Usage: sh count_file.sh folder_path [ file-type ] "
+  echo "Usage: sh count_file.sh -p folder_path [ -t jpg ] [ -x html ] "
+  echo "       -p : 需要查找的文件路径"
+  echo "       -t : 需要查找的文件类型"
+  echo "       -x : 需要排除的文件类型"
 }
 
 if [[ $# == 0 ]] || [[ "$1" == "-h" ]]; then
