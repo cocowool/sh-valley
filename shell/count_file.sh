@@ -55,14 +55,17 @@ if [ -n $FOLDER_PATH ]; then
     echo "查找文件后缀不是：$EXCLUDE_FILE_TYPE 的文件"
     list=`find $FOLDER_PATH -type f ! -name "*.$EXCLUDE_FILE_TYPE"`
   fi
-
+ 
+  count=0
   for i in $list
     do
     # echo $i
     fileSize=$(du -k "${i}" | cut -f1)
+    ((count=count+1))
     # echo $fileSize
     ((totalSize=fileSize+totalSize))
   done
 
   echo "文件总大小为：$((totalSize/1024))M"
+  echo "文件总数为：$count"
 fi
