@@ -1,5 +1,16 @@
 #!bin/bash
 
+# 统计一个目录下指定类型或限制某种类型以外的文件的大小，包括子目录
+
+help() {
+  echo "Usage: sh count_file.sh folder_path [ file-type ] "
+}
+
+if [[ $# == 0 ]] || [[ "$1" == "-h" ]]; then
+  help
+  exit 1
+fi
+
 echo "Count Specific File under folder"
 
 FOLDER_PATH="/Users/shiqiang/Projects/edulinks-blog/public"
