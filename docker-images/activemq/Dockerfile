@@ -4,7 +4,7 @@ MAINTAINER cocowool@qq.com
 
 ADD jdk-8u144-linux-x64.tar.gz /usr/local
 ADD apache-activemq-5.16.3-bin.tar.gz /usr/local
-ADD start.sh /usr/local
+# ADD start.sh /usr/local
 
 WORKDIR /usr/local
 
@@ -15,4 +15,4 @@ ENV CLASSPATH .:$JAVA_HOME/lib
 
 EXPOSE 61616 8161
 
-ENTRYPOINT ["sh","start.sh"]
+ENTRYPOINT ["sh","/usr/local/apache-activemq-5.16.3/activemq start"]
