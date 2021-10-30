@@ -8,11 +8,12 @@ ADD apache-activemq-5.16.3-bin.tar.gz /usr/local
 
 WORKDIR /usr/local
 
-ENV JAVA_HOME /sr/local/jdk1.8.0_144
+ENV JAVA_HOME /usr/local/jdk1.8.0_144
 ENV ACTIVEMQ_HOME /usr/local/apache-activemq-5.16.3
 ENV PATH $JAVA_HOME/bin:$PATH:$ACTIVEMQ_HOME/bin
 ENV CLASSPATH .:$JAVA_HOME/lib
 
 EXPOSE 61616 8161
 
-ENTRYPOINT ["sh","/usr/local/apache-activemq-5.16.3/activemq start"]
+# ENTRYPOINT ["sh","/usr/local/apache-activemq-5.16.3/bin/activemq start"]
+CMD [ "/usr/local/apache-activemq-5.16.3/bin/activemq", "console" ]
