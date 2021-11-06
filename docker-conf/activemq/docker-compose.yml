@@ -7,8 +7,8 @@ services:
       - "8161"
     ports:
       - "8161:8161"
-    volumes:
-      - ~/Projects/sh-valley/docker-conf/activemq/activemq.xml:/usr/local/apache-activemq-5.16.3/conf/activemq.xml
+    # volumes:
+      # - ~/Projects/sh-valley/docker-conf/activemq/activemq.xml:/usr/local/apache-activemq-5.16.3/conf/activemq.xml
     #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
 #     networks:
 #       - es-network
