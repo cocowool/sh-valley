@@ -1,6 +1,6 @@
 version: "2.1"
 services:
-  activemq:
+  activemq-1:
     image: cocowool/activemq:5.16.3
     hostname: activemq
     expose: 
@@ -10,7 +10,7 @@ services:
     # volumes:
       # - ~/Projects/sh-valley/docker-conf/activemq/activemq.xml:/usr/local/apache-activemq-5.16.3/conf/activemq.xml
     #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
-#     networks:
-#       - es-network
+    networks:
+      - default
 # networks:
 #   es-network:
