@@ -2,6 +2,8 @@ import os
 import os.path
 import codecs
 import pandas
+import jieba
+import numpy
 
 # 博客的目录
 # ~/Projects/edulinks-blog/source/_posts/*md
@@ -9,6 +11,7 @@ import pandas
 filePaths = []
 fileContents = []
 
+# 文本读取，构建语料库
 for root, dirs, files in os.walk( "/Users/shiqiang/Projects/edulinks-blog/source/_posts", topdown = False , followlinks = True ):
 # for root, dirs, files in os.walk( "~/Projects/blog-backup/_posts", followlinks = True):
     # ~/Projects/blog-backup/_posts/
@@ -30,4 +33,20 @@ corpos = pandas.DataFrame({
     'fileContent': fileContents
 })
 
-print(corpos)
+# 分词并统计词频
+segments = []
+filePaths = []
+for index, row in corpos.iterrows():
+    filePath = row['filePath']
+    fileContent = row['fileContent']
+    segs = jieba.cut(fileContent)
+    for seg in segs:
+        segments.append(seg)
+        filePaths.append(filePath)
+
+segmentDataFrame = pandas.DataFrame({
+    'segment' : segments,
+    'filePath' : filePaths
+})
+
+print(segmentDataFrame)
