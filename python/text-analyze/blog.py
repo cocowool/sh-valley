@@ -25,4 +25,9 @@ for root, dirs, files in os.walk( "/Users/shiqiang/Projects/edulinks-blog/source
             fh.close()
             fileContents.append(file_content)
 
-print(filePaths)
+corpos = pandas.DataFrame({
+    'filePath': filePaths,
+    'fileContent': fileContents
+})
+
+print(corpos)
