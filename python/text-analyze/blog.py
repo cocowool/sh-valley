@@ -33,7 +33,7 @@ corpos = pandas.DataFrame({
     'fileContent': fileContents
 })
 
-# 分词并统计词频
+# 分词
 segments = []
 filePaths = []
 for index, row in corpos.iterrows():
@@ -49,4 +49,15 @@ segmentDataFrame = pandas.DataFrame({
     'filePath' : filePaths
 })
 
-print(segmentDataFrame)
+
+# 统计词频
+segStat = segmentDataFrame.groupby(by="segment")["segment"].agg([("计数", numpy.size)]).reset_index().sort_values(by=['计数'],ascending=False)
+
+
+stopwords = pandas.read_csv("./StopWordsCN.txt", encoding='utf8',index_col=False)
+
+fSegStat = segStat[~segStat.segment.isin(stopwords)]
+
+# print(segStat)
+# print(segmentDataFrame)
+print(fSegStat)
