@@ -4,6 +4,7 @@ import codecs
 import pandas
 import jieba
 import numpy
+import re
 
 # 博客的目录
 # ~/Projects/edulinks-blog/source/_posts/*md
@@ -39,6 +40,8 @@ filePaths = []
 for index, row in corpos.iterrows():
     filePath = row['filePath']
     fileContent = row['fileContent']
+    # 去掉标点符号
+    fileContent = re.sub(r"[\s+\n\r\"$\';:：]","", fileContent)
     segs = jieba.cut(fileContent)
     for seg in segs:
         segments.append(seg)
