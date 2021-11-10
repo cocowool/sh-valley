@@ -69,8 +69,9 @@ fSegStat = segStat[~segStat.segment.isin(stopwords)]
 wordcloud = WordCloud( font_path = './CHXBS.TTF', background_color = "white")
 words = fSegStat.set_index('segment').to_dict()
 wordcloud.fit_words(words['计数'])
-plt.imshow(wordcloud)
-plt.show
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.show()
 
 # print(segStat)
 # print(segmentDataFrame)
