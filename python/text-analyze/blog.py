@@ -7,6 +7,7 @@ import numpy
 import re
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # 博客的目录
 # ~/Projects/edulinks-blog/source/_posts/*md
@@ -65,9 +66,14 @@ stopwords = pandas.read_csv("./StopWordsCN.txt", encoding='utf8',index_col=False
 
 fSegStat = segStat[~segStat.segment.isin(stopwords)]
 
+# 图像词云
+mask = numpy.array(Image.open("ccb.jpg"))
+
 # 画词云
-wordcloud = WordCloud( font_path = './CHXBS.TTF', background_color = "white")
+wordcloud = WordCloud(mask=mask, font_path = './CHXBS.TTF', mode='RGBA', background_color = "white")
 words = fSegStat.set_index('segment').to_dict()
+
+
 wordcloud.fit_words(words['计数'])
 plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
