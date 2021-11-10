@@ -5,6 +5,8 @@ import pandas
 import jieba
 import numpy
 import re
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 
 # 博客的目录
 # ~/Projects/edulinks-blog/source/_posts/*md
@@ -42,6 +44,8 @@ for index, row in corpos.iterrows():
     fileContent = row['fileContent']
     # 去掉标点符号
     fileContent = re.sub(r"[\s+\n\r\"$\';:：]","", fileContent)
+    # 暂时先去掉英文
+    fileContent = re.sub(r"[a-zA-Z0-9]","", fileContent)
     segs = jieba.cut(fileContent)
     for seg in segs:
         segments.append(seg)
@@ -61,6 +65,13 @@ stopwords = pandas.read_csv("./StopWordsCN.txt", encoding='utf8',index_col=False
 
 fSegStat = segStat[~segStat.segment.isin(stopwords)]
 
+# 画词云
+wordcloud = WordCloud( font_path = './CHXBS.TTF', background_color = "white")
+words = fSegStat.set_index('segment').to_dict()
+wordcloud.fit_words(words['计数'])
+plt.imshow(wordcloud)
+plt.show
+
 # print(segStat)
 # print(segmentDataFrame)
-print(fSegStat)
+# print(fSegStat)
