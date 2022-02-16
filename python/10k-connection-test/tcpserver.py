@@ -12,7 +12,7 @@ def handle(socket, address):
     while True:
         gevent.sleep(sleeptime)
         try:
-            socket.send("ok")
+            socket.send( bytes("ok\n",'utf-8') )
         except Exception as e:
             print(e)
 
