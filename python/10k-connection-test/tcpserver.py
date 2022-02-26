@@ -2,6 +2,8 @@
 from __future__ import print_function
 from gevent.server import StreamServer
 import gevent
+from gevent.signal import signal
+# import signal
 
 # sleeptime = 60
 
@@ -28,4 +30,5 @@ if __name__ == "__main__":
     # default backlog is 256
 
     server = StreamServer(('0.0.0.0', port), handle, backlog=4096)
+    gevent.signal(signal.SIGQUIT, server.close)
     server.serve_forever()
