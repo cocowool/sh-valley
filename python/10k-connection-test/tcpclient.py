@@ -58,9 +58,9 @@ class SocketLocust(Locust):
 
 class SocketUser(SocketLocust):
     # 目标地址
-    host = "192.168.111.30"
+    host = "127.0.0.1"
     # 目标端口
-    port = 80
+    port = 8081
     min_wait = 100
     max_wait = 1000
 
