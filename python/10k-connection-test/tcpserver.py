@@ -11,7 +11,17 @@ def handle(socket, address):
     # print(address)
     # data = socket.recv(1024)
     # print(data)
+    socket.sendall( bytes('Welcome to the echo server! Type quit to exit.\r\n', 'utf-8') )
+    fileobj = socket.makefile()
     while True:
+        # line = fileobj.readline()
+        # if line.strip().lower() == 'quit':
+        #     print ("client quit")
+        #     break
+        # fileobj.write(line)
+        # fileobj.flush()
+        # print ("echoed %r" % line)
+
         gevent.sleep(sleeptime)
         try:
             socket.send( bytes("ok\n",'utf-8') )
@@ -30,5 +40,7 @@ if __name__ == "__main__":
     # default backlog is 256
 
     server = StreamServer(('0.0.0.0', port), handle, backlog=4096)
-    gevent.signal(signal.SIGQUIT, server.close)
+    
+    # gevent.signal(signal.SIGQUIT, server.close)
+
     server.serve_forever()
