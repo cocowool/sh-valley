@@ -11,7 +11,15 @@ class manual_connect():
     # 目标端口
     port = 8081
     skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    skt.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
     skt.connect( (host, port) )
+    while True:
+        msg = skt.recv(1024)
+        print(msg)
+        # client.send('hello world\r\n'.encode())
+        # print('send data')
+        time.sleep(1)
+    # skt.close()
 
 
 manual_connect()

@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     server = StreamServer(('0.0.0.0', port), handle, backlog=4096)
     
-    gevent.signal_handler(signal.SIGTERM, server.close)
+    # gevent.signal_handler(signal.SIGTERM, server.close)
     # gevent.signal(signal.SIGQUIT, server.close)
 
     server.serve_forever()
