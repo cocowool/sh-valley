@@ -19,10 +19,14 @@ class manual_connect():
         # client.send('hello world\r\n'.encode())
         # print('send data')
         time.sleep(1)
+
+    # return True
     # skt.close()
 
-
-manual_connect()
+# 后台拉起多个进程连接服务端
+for i in range(10):
+    print(i)
+# manual_connect()
 
 # class SocketClient(object):
 #     """
