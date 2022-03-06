@@ -1,6 +1,7 @@
 #codeing: utf-8
 from __future__ import print_function
 from gevent.server import StreamServer
+import signal
 import gevent
 from gevent.signal import signal
 # import signal
@@ -25,6 +26,10 @@ def handle(socket, address):
         gevent.sleep(sleeptime)
         try:
             socket.send( bytes("ok\n",'utf-8') )
+        # except KeyboardInterrupt:
+        #     print("Server Close")
+        # except socket.error:
+        #     print("Server Close")
         except Exception as e:
             print(e)
 
@@ -41,6 +46,7 @@ if __name__ == "__main__":
 
     server = StreamServer(('0.0.0.0', port), handle, backlog=4096)
     
+    gevent.signal_handler(signal.SIGTERM, server.close)
     # gevent.signal(signal.SIGQUIT, server.close)
 
     server.serve_forever()
