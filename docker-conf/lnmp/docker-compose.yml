@@ -3,7 +3,7 @@ services:
     nginx:
         image: nginx
         ports:
-            - "80:80"
+            - "8081:8081"
         volumes: 
             - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
             - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
