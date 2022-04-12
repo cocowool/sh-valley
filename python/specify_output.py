@@ -34,4 +34,4 @@ def output_character():
 # 测试字符输出
 # print(output_content(100))
 # 测试固定大小文件
-output_file('test_1k.txt', 1024)
+output_file('test_1k.txt', 1024000)
