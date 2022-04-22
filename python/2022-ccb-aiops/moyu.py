@@ -1,7 +1,7 @@
 # 2022 AIOPS 摸鱼之旅
 
 from dataclasses import field
-import json, datetime, requests
+import json, datetime, requests, os
 from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
@@ -88,8 +88,12 @@ def service_check(data):
 def load_groundtruth():
     print("Load groundtruth data")
     groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth'
-    
-    pass
+
+    for file_name in os.walk(groundtruth_folder):
+        if file_name.endwith('csv'):
+            print(file_name)
+
+    # pass
 
 
 if __name__ == '__main__':
