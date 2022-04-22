@@ -2,6 +2,7 @@
 
 import json, datetime, requests
 from kafka import KafkaConsumer
+from scipy.stats import kendalltau
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -33,4 +34,24 @@ def timestampFormat(timestamp):
     otherStyleTime = dateArray.strftime("%Y-%m-%d %H:%M:%S")    
 
     return otherStyleTime
+
+# 结果提交代码
+def submit(ctx):
+    assert (isinstance(ctx, list))
+    assert (len(ctx) == 2)
+    assert (isinstance(ctx[0], str))
+    assert (isinstance(ctx[1], str))
+    data = {'content': json.dumps(ctx, ensure_ascii=False)}
+    r = requests.post(
+        url='%s/answer/submit' % HOST,
+        json=data,
+        headers={"ticket": TICKET}
+    )
+    return r.text
+
+# 判断交易码中的系统成功率
+def service_check(data):
+    pass
+
+service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
 
