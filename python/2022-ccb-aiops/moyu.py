@@ -53,52 +53,44 @@ def submit(ctx):
 
 # 判断交易码中的系统成功率
 def service_check(data):
-    pass
+    # 无故障的训练数据
+    # service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
+    # 有故障的训练数据
+    service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
+    f = open(service_file, 'r', encoding='utf-8')
+    line = f.readline()
+    apm_data = []
+    i = 1
+
+    while line:
+        # print(line, end='')
+        line = f.readline().strip()
+        fields = line.split(',')
+        if len(fields) > 1:
+            apm_data.append({
+                "service": fields[0],
+                "timestamp": fields[1],
+                "rr": fields[2],
+                "sr": fields[3],
+                "mrt": fields[4],
+                "count": fields[5]
+            })
+
+            # 如果指标低于100则记录下来
+            # @TODO 后续可考虑数据持久化
+            if float(fields[3]) < 100:
+                print(fields)
+
+    f.close()
 
 
 # 加载 groundtruth 数据到 pd 数据结构中
 def load_groundtruth():
+    print("Load groundtruth data")
+    groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth'
+    
     pass
 
-# 无故障的训练数据
-# service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
-# 有故障的训练数据
-service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
-f = open(service_file, 'r', encoding='utf-8')
-line = f.readline()
-apm_data = []
-i = 1
 
-while line:
-    # print(line, end='')
-    line = f.readline().strip()
-    fields = line.split(',')
-    if len(fields) > 1:
-        apm_data.append({
-            "service": fields[0],
-            "timestamp": fields[1],
-            "rr": fields[2],
-            "sr": fields[3],
-            "mrt": fields[4],
-            "count": fields[5]
-        })
-
-        # 如果指标低于100则记录下来
-        # @TODO 后续可考虑数据持久化
-        if float(fields[3]) < 100:
-            print(fields)
-
-f.close()
-
-# print(apm_data)
-
-# with open(service_file, 'r', encoding='utf-8') as file:
-    # data = json.load(file)
-    # print(data)
-    # for i in data['data']:
-    #     # print(i)
-    #     # 查找字符串中的数字
-    #     nums = re.findall('(\d+\.\d+)', i['remark'])
-    #     print(nums[0])
-    #     total_time = total_time + float(nums[0])
-    #     # print(i['remark'])
+if __name__ == '__main__':
+    load_groundtruth()
