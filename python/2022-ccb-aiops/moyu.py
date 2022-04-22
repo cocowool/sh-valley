@@ -5,6 +5,7 @@ import json, datetime, requests, os
 from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
+import pandas as pd
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -92,7 +93,8 @@ def load_groundtruth():
     for parent, _, file_names in os.walk(groundtruth_folder):
         for file_name in file_names:
             if file_name.endswith('csv'):
-                print(file_name)
+                df = pd.read_csv( groundtruth_folder + '/' + file_name)
+                print(df)
 
     # pass
 
