@@ -17,16 +17,16 @@ AVAILABLE_TOPICS = {
     'log-1c9e9efe6847bc4723abd3640527cbe9'
 }
 
-CONSUMER = KafkaConsumer(
-    'kpi-1c9e9efe6847bc4723abd3640527cbe9',
-    'metric-1c9e9efe6847bc4723abd3640527cbe9',
-    'trace-1c9e9efe6847bc4723abd3640527cbe9',
-    'log-1c9e9efe6847bc4723abd3640527cbe9',
-    bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
-    auto_offset_reset='latest',
-    enable_auto_commit=False,
-    security_protocol='PLAINTEXT'
-)
+# CONSUMER = KafkaConsumer(
+#     'kpi-1c9e9efe6847bc4723abd3640527cbe9',
+#     'metric-1c9e9efe6847bc4723abd3640527cbe9',
+#     'trace-1c9e9efe6847bc4723abd3640527cbe9',
+#     'log-1c9e9efe6847bc4723abd3640527cbe9',
+#     bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
+#     auto_offset_reset='latest',
+#     enable_auto_commit=False,
+#     security_protocol='PLAINTEXT'
+# )
 
 # 将时间戳转换为可读时间格式
 def timestampFormat(timestamp):
@@ -54,4 +54,22 @@ def service_check(data):
     pass
 
 service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
+f = open(service_file, 'r', encoding='utf-8')
+line = f.readline()
 
+while line:
+    print(line, end='')
+    line = f.readline()
+
+f.close()
+
+# with open(service_file, 'r', encoding='utf-8') as file:
+    # data = json.load(file)
+    # print(data)
+    # for i in data['data']:
+    #     # print(i)
+    #     # 查找字符串中的数字
+    #     nums = re.findall('(\d+\.\d+)', i['remark'])
+    #     print(nums[0])
+    #     total_time = total_time + float(nums[0])
+    #     # print(i['remark'])
