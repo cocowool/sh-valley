@@ -55,7 +55,15 @@ def submit(ctx):
 def service_check(data):
     pass
 
-service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
+
+# 加载 groundtruth 数据到 pd 数据结构中
+def load_groundtruth():
+    pass
+
+# 无故障的训练数据
+# service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
+# 有故障的训练数据
+service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
 f = open(service_file, 'r', encoding='utf-8')
 line = f.readline()
 apm_data = []
