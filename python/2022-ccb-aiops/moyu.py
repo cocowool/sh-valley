@@ -90,14 +90,23 @@ def load_groundtruth():
     print("Load groundtruth data")
     groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth'
 
+    out_file = 'all_groundtruth.csv'
+
     for parent, _, file_names in os.walk(groundtruth_folder):
         for file_name in file_names:
             if file_name.endswith('csv'):
                 df = pd.read_csv( groundtruth_folder + '/' + file_name)
-                print(df)
+                df.to_csv(groundtruth_folder + '/' + out_file, mode='a', index=False)
 
+    print("Done")
     # pass
 
 
 if __name__ == '__main__':
-    load_groundtruth()
+    # 加载合并后的 groundtruth 文件
+    groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
+    gf = pd.read_csv(groundtruth_folder)
+    print(gf)
+
+
+    # load_groundtruth()
