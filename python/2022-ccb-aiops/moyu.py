@@ -1,6 +1,7 @@
 # 2022 AIOPS 摸鱼之旅
 
 from dataclasses import field
+from distutils.log import error
 import json, datetime, requests, os
 from numpy import empty
 from kafka import KafkaConsumer
@@ -53,7 +54,7 @@ def submit(ctx):
     return r.text
 
 # 判断交易码中的系统成功率
-def service_check(data):
+def service_check():
     # 无故障的训练数据
     # service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
     # 有故障的训练数据
@@ -68,21 +69,30 @@ def service_check(data):
         line = f.readline().strip()
         fields = line.split(',')
         if len(fields) > 1:
-            apm_data.append({
-                "service": fields[0],
-                "timestamp": fields[1],
-                "rr": fields[2],
-                "sr": fields[3],
-                "mrt": fields[4],
-                "count": fields[5]
-            })
+            # apm_data.append({
+            #     "service": fields[0],
+            #     "timestamp": fields[1],
+            #     "rr": fields[2],
+            #     "sr": fields[3],
+            #     "mrt": fields[4],
+            #     "count": fields[5]
+            # })
 
             # 如果指标低于100则记录下来
             # @TODO 后续可考虑数据持久化
             if float(fields[3]) < 100:
-                print(fields)
+                apm_data.append({
+                    "service": fields[0],
+                    "timestamp": fields[1],
+                    "rr": fields[2],
+                    "sr": fields[3],
+                    "mrt": fields[4],
+                    "count": fields[5]
+                })
+                # print(fields)
 
     f.close()
+    return apm_data
 
 
 # 加载 groundtruth 数据到 pd 数据结构中
@@ -106,7 +116,17 @@ if __name__ == '__main__':
     # 加载合并后的 groundtruth 文件
     groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
     gf = pd.read_csv(groundtruth_folder)
-    print(gf)
+    # print(gf)
 
+    error_apm = service_check()
+    print(error_apm)
+
+    for i in error_apm:
+        print(gf['timestamp'].str.contains(i['timestamp']))
+
+
+    # print(error_apm)
+    # print(gf['timestamp'].str.contains('1647761243'))
+    # print(gf.loc[305])
 
     # load_groundtruth()
