@@ -89,9 +89,10 @@ def load_groundtruth():
     print("Load groundtruth data")
     groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth'
 
-    for file_name in os.walk(groundtruth_folder):
-        if file_name.endwith('csv'):
-            print(file_name)
+    for parent, _, file_names in os.walk(groundtruth_folder):
+        for file_name in file_names:
+            if file_name.endswith('csv'):
+                print(file_name)
 
     # pass
 
