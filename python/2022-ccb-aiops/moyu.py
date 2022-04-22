@@ -1,6 +1,8 @@
 # 2022 AIOPS 摸鱼之旅
 
+from dataclasses import field
 import json, datetime, requests
+from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
 
@@ -56,12 +58,31 @@ def service_check(data):
 service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
 f = open(service_file, 'r', encoding='utf-8')
 line = f.readline()
+apm_data = []
+i = 1
 
 while line:
-    print(line, end='')
-    line = f.readline()
+    # print(line, end='')
+    line = f.readline().strip()
+    fields = line.split(',')
+    if len(fields) > 1:
+        apm_data.append({
+            "service": fields[0],
+            "timestamp": fields[1],
+            "rr": fields[2],
+            "sr": fields[3],
+            "mrt": fields[4],
+            "count": fields[5]
+        })
+
+        # 如果指标低于100则记录下来
+        # @TODO 后续可考虑数据持久化
+        if float(fields[3]) < 100:
+            print(fields)
 
 f.close()
+
+# print(apm_data)
 
 # with open(service_file, 'r', encoding='utf-8') as file:
     # data = json.load(file)
