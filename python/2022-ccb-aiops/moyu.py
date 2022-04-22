@@ -54,11 +54,12 @@ def submit(ctx):
     return r.text
 
 # 判断交易码中的系统成功率
-def service_check():
+def service_check(file_name = ''):
     # 无故障的训练数据
     # service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/cloudbed-1/metric/service/metric_service.csv'
     # 有故障的训练数据
     service_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
+    service_file = file_name
     f = open(service_file, 'r', encoding='utf-8')
     line = f.readline()
     apm_data = []
@@ -118,10 +119,29 @@ if __name__ == '__main__':
     gf = pd.read_csv(groundtruth_folder)
     # print(gf)
 
-    error_apm = service_check()
-    print(error_apm)
+    med_file_1 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
+    med_file_2 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-2/metric/service/metric_service.csv'
+    med_file_3 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-3/metric/service/metric_service.csv'
 
-    for i in error_apm:
+
+
+    error_apm_1 = service_check(med_file_1)
+    print(error_apm_1)
+
+    for i in error_apm_1:
+        print(gf['timestamp'].str.contains(i['timestamp']))
+
+
+    error_apm_2 = service_check(med_file_2)
+    print(error_apm_2)
+
+    for i in error_apm_2:
+        print(gf['timestamp'].str.contains(i['timestamp']))
+
+    error_apm_3 = service_check(med_file_3)
+    print(error_apm_3)
+
+    for i in error_apm_3:
         print(gf['timestamp'].str.contains(i['timestamp']))
 
 
