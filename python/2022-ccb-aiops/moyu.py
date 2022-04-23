@@ -136,19 +136,30 @@ def load_heads():
                 # f.close()
 
                 if 'trace_jaeger' in file_name:
-                    pass
+                    print(failure_logs(file_name, find_level, failure_timestamp, 0))
                 elif 'log_filebeat' in file_name:
-                    pass
+                    print(failure_logs(file_name, find_level, failure_timestamp, 1))
                 elif 'kpi_' in file_name:
-                    pass
+                    print(failure_logs(file_name, find_level, failure_timestamp, 0))
                 elif 'metric_service' in file_name:
-                    pass
-                
+                    print(failure_logs(file_name, find_level, failure_timestamp, 1))
+ 
+def failure_logs(file_name, find_level, failure_timestamp, timestamp_col):
+    f = open(file_name, 'r', encoding='utf-8')
+    line = f.readline()
+    apm_data = []
 
+    while line:
+        # print(line, end='')
+        line = f.readline().strip()
+        fields = line.split(',')
+        if len(fields) > 1:
+            if abs(int(fields[timestamp_col]) - failure_timestamp) < find_level:
                 print(line)
-        # print(parent)
-        # print(dir_lists)
-        # print(file_lists)
+                # apm_data.append(fields)
+
+    f.close()
+    return apm_data
 
 if __name__ == '__main__':
     load_heads()
