@@ -20,7 +20,9 @@ appmon = pd.read_csv(file_path)
 # x=timestamp y=srt
 plt.figure()
 x = appmon['timestamp']
-y = appmon['sr']
+# y = appmon['sr']
+# y = appmon['rr']
+y = appmon['mrt']
 plt.plot(x,y)
 plt.show()
 
