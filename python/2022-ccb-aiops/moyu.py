@@ -122,16 +122,29 @@ def load_heads():
     log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
 
     # 故障时间点
-    failure_timestamp = '1647768199'
+    failure_timestamp = 1647768199
+    # 日志查找的前后时间范围
+    find_level = 300
 
     for parent, dir_lists, file_lists in os.walk(log_folder):
         for file_name in file_lists:
             if file_name.endswith('csv'):
                 file_name = os.path.join(parent, file_name)
                 print(file_name)
-                f = open(file_name, 'r', encoding='utf-8')
-                line = f.readline()
-                f.close()
+                # f = open(file_name, 'r', encoding='utf-8')
+                # line = f.readline()
+                # f.close()
+
+                if 'trace_jaeger' in file_name:
+                    pass
+                elif 'log_filebeat' in file_name:
+                    pass
+                elif 'kpi_' in file_name:
+                    pass
+                elif 'metric_service' in file_name:
+                    pass
+                
+
                 print(line)
         # print(parent)
         # print(dir_lists)
