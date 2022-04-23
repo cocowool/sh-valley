@@ -112,37 +112,48 @@ def load_groundtruth():
     print("Done")
     # pass
 
+# 遍历 cloudbed1 文件夹下的所有日志文件，打印列头
+def load_heads():
+    log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
+
+    for parent, _, file_lists in os.walk(log_folder):
+        
+        print(parent)
+        print(_)
+        print(file_lists)
 
 if __name__ == '__main__':
-    # 加载合并后的 groundtruth 文件
-    groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
-    gf = pd.read_csv(groundtruth_folder)
-    # print(gf)
+    load_heads()
 
-    med_file_1 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
-    med_file_2 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-2/metric/service/metric_service.csv'
-    med_file_3 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-3/metric/service/metric_service.csv'
+    # # 加载合并后的 groundtruth 文件
+    # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
+    # gf = pd.read_csv(groundtruth_folder)
+    # # print(gf)
 
-
-
-    error_apm_1 = service_check(med_file_1)
-    print(error_apm_1)
-
-    for i in error_apm_1:
-        print(gf['timestamp'].str.contains(i['timestamp']))
+    # med_file_1 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/service/metric_service.csv'
+    # med_file_2 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-2/metric/service/metric_service.csv'
+    # med_file_3 = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-3/metric/service/metric_service.csv'
 
 
-    error_apm_2 = service_check(med_file_2)
-    print(error_apm_2)
 
-    for i in error_apm_2:
-        print(gf['timestamp'].str.contains(i['timestamp']))
+    # error_apm_1 = service_check(med_file_1)
+    # print(error_apm_1)
 
-    error_apm_3 = service_check(med_file_3)
-    print(error_apm_3)
+    # for i in error_apm_1:
+    #     print(gf['timestamp'].str.contains(i['timestamp']))
 
-    for i in error_apm_3:
-        print(gf['timestamp'].str.contains(i['timestamp']))
+
+    # error_apm_2 = service_check(med_file_2)
+    # print(error_apm_2)
+
+    # for i in error_apm_2:
+    #     print(gf['timestamp'].str.contains(i['timestamp']))
+
+    # error_apm_3 = service_check(med_file_3)
+    # print(error_apm_3)
+
+    # for i in error_apm_3:
+    #     print(gf['timestamp'].str.contains(i['timestamp']))
 
 
     # print(error_apm)
