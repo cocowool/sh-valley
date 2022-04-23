@@ -113,14 +113,29 @@ def load_groundtruth():
     # pass
 
 # 遍历 cloudbed1 文件夹下的所有日志文件，打印列头
+# 日志格式的特点
+# * jaeger timestamp 第一列
+# * log timestamp 第二列
+# * metric timestamp 第一列
+# * metric service timestamp 第二列
 def load_heads():
     log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
 
-    for parent, _, file_lists in os.walk(log_folder):
-        
-        print(parent)
-        print(_)
-        print(file_lists)
+    # 故障时间点
+    failure_timestamp = '1647768199'
+
+    for parent, dir_lists, file_lists in os.walk(log_folder):
+        for file_name in file_lists:
+            if file_name.endswith('csv'):
+                file_name = os.path.join(parent, file_name)
+                print(file_name)
+                f = open(file_name, 'r', encoding='utf-8')
+                line = f.readline()
+                f.close()
+                print(line)
+        # print(parent)
+        # print(dir_lists)
+        # print(file_lists)
 
 if __name__ == '__main__':
     load_heads()
