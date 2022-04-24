@@ -7,8 +7,10 @@ from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
 import pandas as pd
-from adtk.data import validate_series  
-from adtk.visualization import plot 
+from adtk.data import validate_series
+from adtk.transformer import RollingAggregate
+from adtk.transformer import DoubleRollingAggregate
+from adtk.visualization import plot
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -171,7 +173,13 @@ def adtk_test():
     # print(df.index)
     df.index = pd.to_datetime(df.index)
     df = validate_series(df)
-    plot(df)
+    print(df)
+    # print(df['kpi'])
+    print(df["value"])
+    print(df.iloc[:,[0,-1]][df[df.T.index[2]] == 'system.cpu.pct_usage'])
+    plot(df["value"])
+    # df_transformed = RollingAggregate(agg='quantile',agg_params={"q": [0.25, 0.75]}, window=5).transform(df)
+    # plot(df_transformed)
     # pass
 
 if __name__ == '__main__':
