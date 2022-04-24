@@ -7,6 +7,8 @@ from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
 import pandas as pd
+from adtk.data import validate_series  
+from adtk.visualization import plot 
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -122,7 +124,7 @@ def load_heads():
     log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
 
     # 故障时间点
-    failure_timestamp = 1647768199
+    failure_timestamp = 1647749271
     # 日志查找的前后时间范围
     find_level = 300
 
@@ -161,8 +163,21 @@ def failure_logs(file_name, find_level, failure_timestamp, timestamp_col):
     f.close()
     return apm_data
 
+# 测试 ADTK 来验证时间序列
+def adtk_test():
+    file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    df = pd.read_csv(file_name, index_col='timestamp', parse_dates=True)
+    # print(df.cmdb_id)
+    # print(df.index)
+    df.index = pd.to_datetime(df.index)
+    df = validate_series(df)
+    plot(df)
+    # pass
+
 if __name__ == '__main__':
-    load_heads()
+    # load_heads()
+    # print("Test")
+    adtk_test()
 
     # # 加载合并后的 groundtruth 文件
     # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
