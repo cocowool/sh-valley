@@ -184,7 +184,7 @@ def adtk_test():
     print(adf)
     bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
     print(bdf)
-    plot(bdf)
+    plot(df)
 
     # plt.figure()
     # x = bdf.index
