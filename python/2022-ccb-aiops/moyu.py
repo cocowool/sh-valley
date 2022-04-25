@@ -11,6 +11,8 @@ from adtk.data import validate_series
 from adtk.transformer import RollingAggregate
 from adtk.transformer import DoubleRollingAggregate
 from adtk.visualization import plot
+import matplotlib.pyplot as plt
+
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -24,6 +26,9 @@ AVAILABLE_TOPICS = {
     'trace-1c9e9efe6847bc4723abd3640527cbe9',
     'log-1c9e9efe6847bc4723abd3640527cbe9'
 }
+
+# KPI 名称字典
+KPI_LISTS = []
 
 # CONSUMER = KafkaConsumer(
 #     'kpi-1c9e9efe6847bc4723abd3640527cbe9',
@@ -177,6 +182,19 @@ def adtk_test():
     adf = df.drop('cmdb_id', axis=1)
     adf = adf.drop('kpi_name', axis=1)
     print(adf)
+    bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
+    print(bdf)
+    plot(bdf)
+
+    # plt.figure()
+    # x = bdf.index
+    # # y = appmon['sr']
+    # # y = appmon['rr']
+    # y = bdf['value']
+    # plt.plot(x,y)
+    plt.show()
+
+
     # print(df['kpi'])
     # print(df["value"])
     # print(df.iloc[:,[0,-1]][df[df.T.index[2]] == 'system.cpu.pct_usage'])
