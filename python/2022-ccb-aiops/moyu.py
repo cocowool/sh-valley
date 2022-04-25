@@ -174,12 +174,16 @@ def adtk_test():
     df.index = pd.to_datetime(df.index)
     df = validate_series(df)
     print(df)
+    adf = df.drop('cmdb_id', axis=1)
+    adf = adf.drop('kpi_name', axis=1)
+    print(adf)
     # print(df['kpi'])
-    print(df["value"])
-    print(df.iloc[:,[0,-1]][df[df.T.index[2]] == 'system.cpu.pct_usage'])
-    plot(df["value"])
+    # print(df["value"])
+    # print(df.iloc[:,[0,-1]][df[df.T.index[2]] == 'system.cpu.pct_usage'])
+    # plot(df["value"])
     # df_transformed = RollingAggregate(agg='quantile',agg_params={"q": [0.25, 0.75]}, window=5).transform(df)
-    # plot(df_transformed)
+    adf = validate_series(adf)
+    plot(adf)
     # pass
 
 if __name__ == '__main__':
