@@ -11,6 +11,7 @@ from adtk.data import validate_series
 from adtk.transformer import RollingAggregate
 from adtk.transformer import DoubleRollingAggregate
 from adtk.visualization import plot
+from adtk.detector import ThresholdAD
 import matplotlib.pyplot as plt
 
 
@@ -121,7 +122,7 @@ def load_groundtruth():
     print("Done")
     # pass
 
-# 遍历 cloudbed1 文件夹下的所有日志文件，打印列头
+# 遍历 cloudbed1 文件夹下的所有日志文件，打印故障时间短的所有日志信息
 # 日志格式的特点
 # * jaeger timestamp 第一列
 # * log timestamp 第二列
@@ -131,7 +132,7 @@ def load_heads():
     log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
 
     # 故障时间点
-    failure_timestamp = 1647749271
+    failure_timestamp = 1647743133
     # 日志查找的前后时间范围
     find_level = 300
 
@@ -182,9 +183,19 @@ def adtk_test():
     adf = df.drop('cmdb_id', axis=1)
     adf = adf.drop('kpi_name', axis=1)
     print(adf)
+
     bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
+    bdf = bdf.drop('cmdb_id', axis = 1)
+    bdf = bdf.drop('kpi_name', axis = 1)
+
     print(bdf)
-    plot(df)
+    
+    plot(bdf)
+
+    threshold_ad = ThresholdAD(high=20, low=5)
+    anomalies = threshold_ad.detect(bdf)
+    plot(bdf, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_markersize=5, anomaly_color='red', anomaly_tag="marker")
+
 
     # plt.figure()
     # x = bdf.index
@@ -205,9 +216,9 @@ def adtk_test():
     # pass
 
 if __name__ == '__main__':
-    # load_heads()
+    load_heads()
     # print("Test")
-    adtk_test()
+    # adtk_test()
 
     # # 加载合并后的 groundtruth 文件
     # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
