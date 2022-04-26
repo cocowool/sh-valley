@@ -1,31 +1,71 @@
 from kafka import KafkaConsumer
-import time, json
+import time, json, requests, os, random
 
 # 作为比赛专用调试代码，尝试提交并记录日志
+
+# 提交答案服务域名或IP, 将在赛前告知
+HOST = "http://10.3.2.40:30083"
+
+# 团队标识, 可通过界面下方权限获取, 每个ticket仅在当前赛季有效，如未注明团队标识，结果不计入成绩
+TICKET = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNTA3MzQ5Mjg3NzU0MTc4NjE4IiwiaWF0IjoxNjUwNTUwMzgwLCJ0aWNrZXQiOnsidGlkIjoiMTUwNzM0OTI4Nzc1NDE3ODYxOCIsImNpZCI6IjE0OTYzOTg1MjY0Mjk3MjQ3NjAiLCJzZWFzb24iOiIxIiwic3RhcnQiOiIxNjUwMzg0MDAwMDAwIiwiZW5kIjoiMTY1MjYzMDM5OTAwMCJ9LCJpc3MiOiJCaXpzZWVyIiwiZXhwIjoxNjUyNjMwMzk5fQ.wY7GzSh7cEM-IeP1pUsZiEzOXzg6FzEh3wKHk4j4KwMEeo9TgpLDWt7Evk-NrIvBOL6JdkN2xmP5eAg4FspWkw"
+
+NODE_FAILURE_TYPE = ['node 磁盘读IO消耗', 'node 磁盘空间消耗', 'node 磁盘写IO消耗', 'node 内存消耗', 'node节点CPU故障', 'node节点CPU爬升']
+SERVICE_FAILURE_TYPE = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器进程中止', 'k8s容器内存负载', 'k8s容器网络丢包', 'k8s容器网络延迟', 'k8s容器网络资源包损坏', 'k8s容器网络资源包重复发送', 'k8s容器写io负载']
+
 
 # 记录提交日志
 def submit_log():
     pass
 
-node_failure_type = ['node 磁盘读IO消耗', 'node 磁盘空间消耗', 'node 磁盘写IO消耗', 'node 内存消耗', 'node节点CPU故障', 'node节点CPU爬升']
-service_failure_type = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器进程中止', 'k8s容器内存负载', 'k8s容器网络丢包', 'k8s容器网络延迟', 'k8s容器网络资源包损坏', 'k8s容器网络资源包重复发送', 'k8s容器写io负载']
+# Kafka 消费方法
+def kafka_consumer():
+    CONSUMER = KafkaConsumer(
+        # 'kpi-1c9e9efe6847bc4723abd3640527cbe9',
+        'metric-1c9e9efe6847bc4723abd3640527cbe9',
+        # 'trace-1c9e9efe6847bc4723abd3640527cbe9',
+        # 'log-1c9e9efe6847bc4723abd3640527cbe9',
+        bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
+        auto_offset_reset='latest',
+        enable_auto_commit=False,
+        security_protocol='PLAINTEXT'
+    )
 
-CONSUMER = KafkaConsumer(
-    # 'kpi-1c9e9efe6847bc4723abd3640527cbe9',
-    'metric-1c9e9efe6847bc4723abd3640527cbe9',
-    # 'trace-1c9e9efe6847bc4723abd3640527cbe9',
-    # 'log-1c9e9efe6847bc4723abd3640527cbe9',
-    bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
-    auto_offset_reset='latest',
-    enable_auto_commit=False,
-    security_protocol='PLAINTEXT'
-)
+    print("Begin Kafka Consuming")
+    i = 0
+    for message in CONSUMER:
+        i += 1
+        data = json.loads(message.value.decode('utf8'))
+        data = json.loads(data)
+        if int(data['count']) > 100:
+            print(data)
+            res = submit([data['service'], random.choice(SERVICE_FAILURE_TYPE)])
+            print(res)
+        # if int(data['count']) > 100:
+        #     print(type(data), data)
 
-print("Begin Kafka Consuming")
-i = 0
-for message in CONSUMER:
-    i += 1
-    data = json.loads(message.value.decode('utf8'))
-    if data.count > 100:
-        print(type(data), data)
+# 结果提交代码
+def submit(ctx):
+    assert (isinstance(ctx, list))
+    assert (len(ctx) == 2)
+    assert (isinstance(ctx[0], str))
+    assert (isinstance(ctx[1], str))
+    data = {'content': json.dumps(ctx, ensure_ascii=False)}
+    r = requests.post(
+        url='%s/answer/submit' % HOST,
+        json=data,
+        headers={"ticket": TICKET}
+    )
+    return r.text
 
+
+# 测试用的方法
+def test():
+    # print(random.choice(SERVICE_FAILURE_TYPE))
+    ops_str = '{"service":"frontend-http","timestamp":"1650985740","rr":"100.0","sr":"100.0","mrt":"46.791044776119406","count":"135"}'
+    print(ops_str)
+    data = json.loads(ops_str)
+    print(data)
+    print(data['timestamp'])
+
+
+kafka_consumer()
