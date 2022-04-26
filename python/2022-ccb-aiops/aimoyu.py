@@ -52,6 +52,7 @@ def kafka_consumer():
             res = submit([data['service'], random.choice(SERVICE_FAILURE_TYPE)])
             log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
             log_message += 'Content: [' + data['service'] + ', ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + res + '\n'
+            submit_log(log_message)
             print(res)
         # if int(data['count']) > 100:
         #     print(type(data), data)
