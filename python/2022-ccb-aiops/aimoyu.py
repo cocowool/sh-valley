@@ -14,8 +14,17 @@ SERVICE_FAILURE_TYPE = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器
 
 
 # 记录提交日志
-def submit_log():
-    pass
+def submit_log(message):
+    startname = time.strftime('%Y%m%d', time.localtime(time.time()))
+    log_path = '/data/logs/'
+    # log_path = './'
+    log_file = startname + '-debug.log'
+
+    # if not os.path.exists(log_path + log_file ):
+    f = open(log_path + log_file, 'a')
+    # else:
+    f.write(message)
+    f.close()
 
 # Kafka 消费方法
 def kafka_consumer():
@@ -32,13 +41,17 @@ def kafka_consumer():
 
     print("Begin Kafka Consuming")
     i = 0
+    j = 0
     for message in CONSUMER:
-        i += 1
+        j += 1
         data = json.loads(message.value.decode('utf8'))
         data = json.loads(data)
         if int(data['count']) > 100:
+            i += 1
             print(data)
             res = submit([data['service'], random.choice(SERVICE_FAILURE_TYPE)])
+            log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+            log_message += 'Content: [' + data['service'] + ', ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + res + '\n'
             print(res)
         # if int(data['count']) > 100:
         #     print(type(data), data)
@@ -69,3 +82,11 @@ def test():
 
 
 kafka_consumer()
+# submit_log()
+
+# i = 1
+# log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+# log_message += 'Content: [service, ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + '\n'
+
+# print(log_message)
+# submit_log(log_message)
