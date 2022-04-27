@@ -229,11 +229,18 @@ def plt_metrics():
 
     df = pd.read_csv( test_file )
     bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
+    cdf = bdf[ bdf['cmdb_id'].str.contains('node-1')]
+    # print(cdf)
+    plt.figure()
+    x = cdf['timestamp']
+    y = cdf['value']
+    plt.plot(x,y)
+    plt.show()
 
     # bdf.plot( figsize =(10,6), alpha = 0.5)
     # plt.show()
 
-    print( df['cmdb_id'].to_list() )
+    # print( df['cmdb_id'].to_list() )
     # bdf = pd.DataFrame(df['cmdb_id'].to_list(), columns = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5'])
 
 
