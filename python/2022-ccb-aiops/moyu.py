@@ -215,8 +215,22 @@ def adtk_test():
     plot(adf)
     # pass
 
+# 将 10 份 Metric 数据按照指标绘制到一张图上
+def plt_metrics():
+    normal_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/'
+    faults_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/'
+
+    normal_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0319.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0319.csv']
+
+    faults_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0320.csv']
+
+    
+    pass
+
 if __name__ == '__main__':
-    load_heads()
+    print(timestampFormat(1647723540))
+
+    # load_heads()
     # print("Test")
     # adtk_test()
 
