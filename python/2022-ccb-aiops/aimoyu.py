@@ -26,10 +26,24 @@ def submit_log(message):
     f.write(message)
     f.close()
 
+# 结果提交代码
+def submit(ctx):
+    assert (isinstance(ctx, list))
+    assert (len(ctx) == 2)
+    assert (isinstance(ctx[0], str))
+    assert (isinstance(ctx[1], str))
+    data = {'content': json.dumps(ctx, ensure_ascii=False)}
+    r = requests.post(
+        url='%s/answer/submit' % HOST,
+        json=data,
+        headers={"ticket": TICKET}
+    )
+    return r.text
+
 # Kafka 消费方法
 def kafka_consumer():
     CONSUMER = KafkaConsumer(
-        # 'kpi-1c9e9efe6847bc4723abd3640527cbe9',
+        'kpi-1c9e9efe6847bc4723abd3640527cbe9',
         'metric-1c9e9efe6847bc4723abd3640527cbe9',
         # 'trace-1c9e9efe6847bc4723abd3640527cbe9',
         # 'log-1c9e9efe6847bc4723abd3640527cbe9',
@@ -46,30 +60,54 @@ def kafka_consumer():
         j += 1
         data = json.loads(message.value.decode('utf8'))
         data = json.loads(data)
-        if int(data['count']) > 100:
-            i += 1
-            print(data)
-            res = submit([data['service'], random.choice(SERVICE_FAILURE_TYPE)])
-            log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-            log_message += 'Content: [' + data['service'] + ', ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + res + '\n'
-            submit_log(log_message)
-            print(res)
+        if data.__contains__('cmdb_id') and data.__contains__('kpi_name'):
+            if data['kpi_name'] == '' and float(data['value'] > 60):
+                cpu_pct(data, i)
+                i = i + 1
+
+        # if int(data['count']) > 100:
+        #     i += 1
+        #     print(data)
+        #     res = submit([data['service'], random.choice(SERVICE_FAILURE_TYPE)])
+        #     log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+        #     log_message += 'Content: [' + data['service'] + ', ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + res + '\n'
+        #     submit_log(log_message)
+        #     print(res)
         # if int(data['count']) > 100:
         #     print(type(data), data)
 
-# 结果提交代码
-def submit(ctx):
-    assert (isinstance(ctx, list))
-    assert (len(ctx) == 2)
-    assert (isinstance(ctx[0], str))
-    assert (isinstance(ctx[1], str))
-    data = {'content': json.dumps(ctx, ensure_ascii=False)}
-    r = requests.post(
-        url='%s/answer/submit' % HOST,
-        json=data,
-        headers={"ticket": TICKET}
+# 分析CPU故障场景
+def cpu_pct(data, i):
+    if float(data['value']) > 60:
+        # node节点CPU故障
+        res = submit([data['cmdb_id'], SERVICE_FAILURE_TYPE[4]])
+        log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+        log_message += 'Content: [' + data['cmdb_id'] + ', ' + SERVICE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+        submit_log(log_message)
+        print(res)
+
+# 仅打印 Kafka 中的内容
+def kafka_print():
+    CONSUMER = KafkaConsumer(
+        'kpi-1c9e9efe6847bc4723abd3640527cbe9',
+        'metric-1c9e9efe6847bc4723abd3640527cbe9',
+        # 'trace-1c9e9efe6847bc4723abd3640527cbe9',
+        # 'log-1c9e9efe6847bc4723abd3640527cbe9',
+        bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
+        auto_offset_reset='latest',
+        enable_auto_commit=False,
+        security_protocol='PLAINTEXT'
     )
-    return r.text
+
+    print("Begin Kafka Consuming")
+    i = 0
+    j = 0
+    for message in CONSUMER:
+        j += 1
+        data = json.loads(message.value.decode('utf8'))
+        data = json.loads(data)
+        print(data)
+
 
 
 # 测试用的方法
@@ -84,6 +122,7 @@ def test():
 
 kafka_consumer()
 # submit_log()
+# kafka_print()
 
 # i = 1
 # log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
