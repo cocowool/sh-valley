@@ -236,9 +236,10 @@ def plt_metrics():
     plt.figure()
     for i in node_list:
         cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
-        plt.plot(cdf['timestamp'], cdf['value'], c=colors[j])
+        plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
         j += 1
 
+    plt.legend(loc='best')
     plt.show()
 
     # bdf.plot( figsize =(10,6), alpha = 0.5)
