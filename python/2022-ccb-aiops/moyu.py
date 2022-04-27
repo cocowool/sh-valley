@@ -7,6 +7,7 @@ from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
 import pandas as pd
+import numpy as np
 from adtk.data import validate_series
 from adtk.transformer import RollingAggregate
 from adtk.transformer import DoubleRollingAggregate
@@ -224,11 +225,28 @@ def plt_metrics():
 
     faults_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0320.csv']
 
-    
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+
+    df = pd.read_csv( test_file )
+    bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
+
+    # bdf.plot( figsize =(10,6), alpha = 0.5)
+    # plt.show()
+
+    print( df['cmdb_id'].to_list() )
+    # bdf = pd.DataFrame(df['cmdb_id'].to_list(), columns = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5'])
+
+
+    # pd.pivot_table( bdf, index=['timestamp'] )
+    # print(bdf)
+
     pass
 
 if __name__ == '__main__':
-    print(timestampFormat(1647723540))
+    # print(timestampFormat(1647723540))
+
+    # 对比 Metric 并绘图
+    plt_metrics()
 
     # load_heads()
     # print("Test")
