@@ -1,5 +1,5 @@
 from kafka import KafkaConsumer
-import time, json, requests, os, random
+import time, json, requests, os, random, sys
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
@@ -61,7 +61,8 @@ def kafka_consumer():
         data = json.loads(message.value.decode('utf8'))
         data = json.loads(data)
         if data.__contains__('cmdb_id') and data.__contains__('kpi_name'):
-            if data['kpi_name'] == '' and float(data['value'] > 60):
+            if data['kpi_name'] == 'system.cpu.pct_usage' and float(data['value']) > 60:
+                print("Catch CPU Error !")
                 cpu_pct(data, i)
                 i = i + 1
 
@@ -78,11 +79,12 @@ def kafka_consumer():
 
 # 分析CPU故障场景
 def cpu_pct(data, i):
-    if float(data['value']) > 60:
+    if float(data['value']) > 20:
         # node节点CPU故障
+        print(data)
         res = submit([data['cmdb_id'], SERVICE_FAILURE_TYPE[4]])
         log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-        log_message += 'Content: [' + data['cmdb_id'] + ', ' + SERVICE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+        log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
         submit_log(log_message)
         print(res)
 
@@ -119,8 +121,10 @@ def test():
     print(data)
     print(data['timestamp'])
 
-
-kafka_consumer()
+if __name__ == '__main__':
+    print("2022 CCB AIOPS Match by " + sys.argv[0])
+    # 支持命令行参数，方便调试
+    # kafka_consumer()
 # submit_log()
 # kafka_print()
 
