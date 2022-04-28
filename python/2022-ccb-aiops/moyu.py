@@ -228,19 +228,28 @@ def plt_metrics():
     test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
 
     df = pd.read_csv( test_file )
-    bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
-
+    
     node_list = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5']
     colors = ['red', 'blue', 'green', 'orange', 'black']
-    j = 0
-    plt.figure()
-    for i in node_list:
-        cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
-        plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
-        j += 1
+    kpi_list = df['kpi_name'].unique()
+    for subplot in range(0, len(kpi_list)):
+        fig = plt.figure()
+        # ax = fig.add_subplot(len(kpi_list),1,subplot+1)
+        bdf = df[ df['kpi_name'].str.contains(kpi_list[subplot]) ]
 
-    plt.legend(loc='best')
-    plt.show()
+        j = 0
+        # plt.figure()
+        for i in node_list:
+            cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
+            plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
+            j += 1
+
+        plt.xlabel('Timestamp')
+        plt.ylabel(kpi_list[subplot])
+        plt.legend(loc='best')
+        plt.show()
+
+    
 
     # bdf.plot( figsize =(10,6), alpha = 0.5)
     # plt.show()
