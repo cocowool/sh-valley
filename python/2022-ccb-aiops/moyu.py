@@ -225,29 +225,44 @@ def plt_metrics():
 
     faults_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0320.csv']
 
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv'
 
     df = pd.read_csv( test_file )
     
     node_list = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5']
     colors = ['red', 'blue', 'green', 'orange', 'black']
+    cloud_error = {1647754788:'node-4,node CPU FAIL', 1647755511: 'node-6,node CPU FAIL', 1647767561:'node-4,node CPU UP'}
+
+    print(cloud_error[1647754788])
+    for i in cloud_error:
+        print(i)
+
+    # print( df['value'].max() )
+
     kpi_list = df['kpi_name'].unique()
     for subplot in range(0, len(kpi_list)):
-        fig = plt.figure()
-        # ax = fig.add_subplot(len(kpi_list),1,subplot+1)
-        bdf = df[ df['kpi_name'].str.contains(kpi_list[subplot]) ]
+        if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
+            print(kpi_list[subplot])
 
-        j = 0
-        # plt.figure()
-        for i in node_list:
-            cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
-            plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
-            j += 1
+            fig = plt.figure(figsize=(14,8))
+            plt.rcParams['font.sans-serif'] = 'Monaco'
+            # ax = fig.add_subplot(len(kpi_list),1,subplot+1)
+            bdf = df[ df['kpi_name'].str.contains(kpi_list[subplot]) ]
 
-        plt.xlabel('Timestamp')
-        plt.ylabel(kpi_list[subplot])
-        plt.legend(loc='best')
-        plt.show()
+            j = 0
+            # plt.figure()
+            for i in node_list:
+                cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
+                plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
+                j += 1
+
+            for i in cloud_error:
+                plt.text(i,cdf['value'].max(),cloud_error[i],ha = 'center',va = 'bottom',fontsize=7,rotation=90)
+
+            plt.xlabel('Timestamp')
+            plt.ylabel(kpi_list[subplot])
+            plt.legend(loc='best')
+            plt.show()
 
     
 
@@ -260,8 +275,6 @@ def plt_metrics():
 
     # pd.pivot_table( bdf, index=['timestamp'] )
     # print(bdf)
-
-    pass
 
 if __name__ == '__main__':
     # print(timestampFormat(1647723540))
