@@ -72,22 +72,45 @@ def kafka_consumer():
 
 # 消费本地文件的方式，通过读取文件内容来分析异常点
 def local_consumer():
-    pass
+    print('Local Consumer Mode !')
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
 
-        # if int(data['count']) > 100:
-        #     i += 1
-        #     print(data)
-        #     res = submit([data['service'], random.choice(SERVICE_FAILURE_TYPE)])
-        #     log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-        #     log_message += 'Content: [' + data['service'] + ', ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + res + '\n'
-        #     submit_log(log_message)
-        #     print(res)
-        # if int(data['count']) > 100:
-        #     print(type(data), data)
+    f = open(test_file, 'r', encoding='utf-8')
+    line = f.readline()
+    match_data = {}
+    i = 1
+
+    while line:
+        line = f.readline().strip()
+        # print(line, end='')
+        fields = line.split(',')
+        if len(fields) > 1:
+            if 'trace_jaeger' in test_file:
+                pass
+            elif 'log_filebeat' in test_file:
+                pass
+            elif 'kpi_' in test_file:
+                match_data["timestamp"] = fields[0]
+                match_data["cmdb_id"] = fields[1]
+                match_data["kpi_name"] = fields[2]
+                match_data["value"] = fields[3]
+            elif 'metric_service' in test_file:
+                match_data["service"] = fields[0]
+                match_data["timestamp"] = fields[1]
+                match_data["rr"] = fields[2]
+                match_data["sr"] = fields[3]
+                match_data["mrt"] = fields[4]
+                match_data["count"] = fields[5]                
+
+        data_process(match_data)
+
+    f.close()    
+
 
 # 处理数据，按条接收并处理数据，屏蔽 Kafka 和本地文件的差异
 # 记录开始处理的时间，记录处理的数据量
 def data_process( data ):
+    print(data)
     pass
 
 # 分析CPU故障场景
@@ -145,7 +168,12 @@ if __name__ == '__main__':
         if o in ("-m", "--mode"):
             PROCESS_MODE = a
 
-    print(PROCESS_MODE)
+    if PROCESS_MODE == 'dev':
+        local_consumer()
+    else:
+        kafka_consumer()
+
+    # print(PROCESS_MODE)
     # 支持命令行参数，方便调试
     # kafka_consumer()
 # submit_log()
