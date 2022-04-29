@@ -276,11 +276,11 @@ if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    # plt_metrics()
+    plt_metrics()
 
     # load_heads()
     # print("Test")
-    adtk_test()
+    # adtk_test()
 
     # # 加载合并后的 groundtruth 文件
     # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
