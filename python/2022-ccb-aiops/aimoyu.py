@@ -1,7 +1,7 @@
 from kafka import KafkaConsumer
-import time, json, requests, os, random, sys, getopt
+import time, json, requests, os, random, sys, getopt, datetime
 import pandas as pd
-from pandas import DataFrame
+from pandas import DataFrame, DatetimeIndex
 from adtk.data import validate_series
 from adtk.transformer import RollingAggregate
 from adtk.transformer import DoubleRollingAggregate
@@ -26,6 +26,14 @@ PROCESS_MODE = 'pro'
 
 # CPU 数据的DataFrame存储
 DF_NODE1_CPU_USAGE = pd.DataFrame()
+
+# 将时间戳转换为可读时间格式
+def timestampFormat(timestamp):
+    dateArray = datetime.datetime.utcfromtimestamp(timestamp)
+    otherStyleTime = dateArray.strftime("%Y-%m-%d %H:%M:%S")    
+
+    return otherStyleTime
+
 
 # 记录提交日志
 def submit_log(message):
@@ -138,10 +146,12 @@ def adtk_cpu(data):
     # print(data['kpi_name'])
     if data['kpi_name'] == 'system.cpu.pct_usage': 
         if data['cmdb_id'] == 'node-1':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            series = pd.Series({"timestamp":data['timestamp'],"cmdb_id":data['cmdb_id'], "value":data['value']}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( series )
             DF_NODE1_CPU_USAGE.index = pd.to_datetime(DF_NODE1_CPU_USAGE.index)
-            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( [{"timestamp":data['timestamp'], "value":data['value']}])
-            DF_NODE1_CPU_USAGE = validate_series(DF_NODE1_CPU_USAGE)
             print(DF_NODE1_CPU_USAGE)
+            DF_NODE1_CPU_USAGE = validate_series(DF_NODE1_CPU_USAGE)
 
 # 分析CPU故障场景
 def cpu_pct(data, i):
