@@ -133,7 +133,7 @@ def load_heads():
     log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
 
     # 故障时间点
-    failure_timestamp = 1647743133
+    failure_timestamp = 1647754788
     # 日志查找的前后时间范围
     find_level = 300
 
@@ -176,27 +176,24 @@ def failure_logs(file_name, find_level, failure_timestamp, timestamp_col):
 def adtk_test():
     file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
     df = pd.read_csv(file_name, index_col='timestamp', parse_dates=True)
-    # print(df.cmdb_id)
-    # print(df.index)
-    df.index = pd.to_datetime(df.index)
-    df = validate_series(df)
     print(df)
-    adf = df.drop('cmdb_id', axis=1)
-    adf = adf.drop('kpi_name', axis=1)
-    print(adf)
 
-    bdf = df[ df['kpi_name'].str.contains('system.cpu.pct_usage') ]
-    bdf = bdf.drop('cmdb_id', axis = 1)
-    bdf = bdf.drop('kpi_name', axis = 1)
-
+    adf = df[ df['cmdb_id'].str.contains('node-4')]
+    bdf = adf[ adf['kpi_name'].str.contains('system.cpu.pct_usage')]
     print(bdf)
-    
-    plot(bdf)
 
-    threshold_ad = ThresholdAD(high=20, low=5)
-    anomalies = threshold_ad.detect(bdf)
-    plot(bdf, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_markersize=5, anomaly_color='red', anomaly_tag="marker")
+    cdf = bdf.drop('cmdb_id', axis=1)
+    cdf = cdf.drop('kpi_name', axis=1)
+    cdf.index = pd.to_datetime(cdf.index)
+    cdf = validate_series(cdf)
+    print(cdf)
 
+    threshold_ad = ThresholdAD(high=20, low=0)
+    anomalies = threshold_ad.detect(cdf)
+    print(anomalies)
+
+    plot(cdf, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_markersize=5, anomaly_color='red', anomaly_tag="marker")
+    plt.show()
 
     # plt.figure()
     # x = bdf.index
@@ -204,16 +201,14 @@ def adtk_test():
     # # y = appmon['rr']
     # y = bdf['value']
     # plt.plot(x,y)
-    plt.show()
-
-
+    # plt.show()
     # print(df['kpi'])
     # print(df["value"])
     # print(df.iloc[:,[0,-1]][df[df.T.index[2]] == 'system.cpu.pct_usage'])
     # plot(df["value"])
     # df_transformed = RollingAggregate(agg='quantile',agg_params={"q": [0.25, 0.75]}, window=5).transform(df)
-    adf = validate_series(adf)
-    plot(adf)
+    # adf = validate_series(adf)
+    # plot(adf)
     # pass
 
 # 将 10 份 Metric 数据按照指标绘制到一张图上
@@ -225,7 +220,7 @@ def plt_metrics():
 
     faults_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0320.csv']
 
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv'
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
 
     df = pd.read_csv( test_file )
     
@@ -257,6 +252,7 @@ def plt_metrics():
                 j += 1
 
             for i in cloud_error:
+                plt.plot(i, cdf['value'].max(), 'o')
                 plt.text(i,cdf['value'].max(),cloud_error[i],ha = 'center',va = 'bottom',fontsize=7,rotation=90)
 
             plt.xlabel('Timestamp')
@@ -280,11 +276,11 @@ if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    plt_metrics()
+    # plt_metrics()
 
     # load_heads()
     # print("Test")
-    # adtk_test()
+    adtk_test()
 
     # # 加载合并后的 groundtruth 文件
     # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
