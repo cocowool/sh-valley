@@ -1,5 +1,7 @@
 from kafka import KafkaConsumer
 import time, json, requests, os, random, sys, getopt
+import pandas as pd
+from pandas import DataFrame
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
@@ -16,6 +18,9 @@ SERVICE_FAILURE_TYPE = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器
 # pro 表示生产模式
 # dev 表示测试模式
 PROCESS_MODE = 'pro'
+
+# CPU 数据的DataFrame存储
+DF_NODE1_CPU_USAGE = pd.DataFrame()
 
 # 记录提交日志
 def submit_log(message):
@@ -58,17 +63,19 @@ def kafka_consumer():
     )
 
     print("Begin Kafka Consuming")
-    i = 0
-    j = 0
+    # i = 0
+    # j = 0
     for message in CONSUMER:
-        j += 1
+        # j += 1
         data = json.loads(message.value.decode('utf8'))
         data = json.loads(data)
-        if data.__contains__('cmdb_id') and data.__contains__('kpi_name'):
-            if data['kpi_name'] == 'system.cpu.pct_usage' and float(data['value']) > 60:
-                print("Catch CPU Error !")
-                cpu_pct(data, i)
-                i = i + 1
+        data_process(data)
+
+        # if data.__contains__('cmdb_id') and data.__contains__('kpi_name'):
+        #     if data['kpi_name'] == 'system.cpu.pct_usage' and float(data['value']) > 60:
+        #         print("Catch CPU Error !")
+        #         cpu_pct(data, i)
+        #         i = i + 1
 
 # 消费本地文件的方式，通过读取文件内容来分析异常点
 def local_consumer():
@@ -110,13 +117,24 @@ def local_consumer():
 # 处理数据，按条接收并处理数据，屏蔽 Kafka 和本地文件的差异
 # 记录开始处理的时间，记录处理的数据量
 def data_process( data ):
-    print(data)
+    # print(data)
 
     adtk_cpu(data)
-    pass
 
+# 使用 ADTK 方法计算CPU指标
 def adtk_cpu(data):
-    pass
+    # 不是目标数据的，不计算直接返回
+    if not data.__contains__('kpi_name'):
+        return
+
+    global DF_NODE1_CPU_USAGE
+    # print(data)
+    time.sleep(0.01)
+    # print(data['kpi_name'])
+    if data['kpi_name'] == 'system.cpu.pct_usage': 
+        if data['cmdb_id'] == 'node-1':
+            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( [{"timestamp":data['timestamp'], "value":data['value']}])
+            print(DF_NODE1_CPU_USAGE)
 
 # 分析CPU故障场景
 def cpu_pct(data, i):
