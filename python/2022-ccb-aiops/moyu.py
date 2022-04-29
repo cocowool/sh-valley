@@ -154,7 +154,33 @@ def load_heads():
                     print(failure_logs(file_name, find_level, failure_timestamp, 0))
                 elif 'metric_service' in file_name:
                     print(failure_logs(file_name, find_level, failure_timestamp, 1))
- 
+
+# 将正常的数据按指标输出
+def prepare_data():
+    # 正常数据文件
+    file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv'
+    f = open(file_name, 'r', encoding='utf-8')
+    line = f.readline()
+    normal_data = []
+
+    while line:
+        # print(line, end='')
+        line = f.readline().strip()
+        fields = line.split(',')
+        if len(fields) > 1:
+            if fields[1] == 'node-1' and fields[2] == 'system.cpu.pct_usage':
+                print(line)
+                normal_data.append({
+                    "timestamp": fields[0],
+                    "cmdb_id": fields[1],
+                    "kpi_name": fields[2],
+                    "value": fields[3]
+                })
+
+
+    # print(normal_data)
+    f.close()
+
 def failure_logs(file_name, find_level, failure_timestamp, timestamp_col):
     f = open(file_name, 'r', encoding='utf-8')
     line = f.readline()
@@ -175,6 +201,10 @@ def failure_logs(file_name, find_level, failure_timestamp, timestamp_col):
 # 测试 ADTK 来验证时间序列
 def adtk_test():
     file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+
+    # 正常数据文件
+    # file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv'
+
     df = pd.read_csv(file_name, index_col='timestamp', parse_dates=True)
     print(df)
 
@@ -276,11 +306,14 @@ if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    plt_metrics()
+    # plt_metrics()
 
     # load_heads()
     # print("Test")
     # adtk_test()
+
+    # 根据指标加载正常数据
+    prepare_data()
 
     # # 加载合并后的 groundtruth 文件
     # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
