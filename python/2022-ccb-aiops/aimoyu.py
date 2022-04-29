@@ -2,6 +2,11 @@ from kafka import KafkaConsumer
 import time, json, requests, os, random, sys, getopt
 import pandas as pd
 from pandas import DataFrame
+from adtk.data import validate_series
+from adtk.transformer import RollingAggregate
+from adtk.transformer import DoubleRollingAggregate
+from adtk.visualization import plot
+from adtk.detector import ThresholdAD
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
@@ -133,7 +138,9 @@ def adtk_cpu(data):
     # print(data['kpi_name'])
     if data['kpi_name'] == 'system.cpu.pct_usage': 
         if data['cmdb_id'] == 'node-1':
+            DF_NODE1_CPU_USAGE.index = pd.to_datetime(DF_NODE1_CPU_USAGE.index)
             DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( [{"timestamp":data['timestamp'], "value":data['value']}])
+            DF_NODE1_CPU_USAGE = validate_series(DF_NODE1_CPU_USAGE)
             print(DF_NODE1_CPU_USAGE)
 
 # 分析CPU故障场景
