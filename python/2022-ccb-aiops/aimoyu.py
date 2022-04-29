@@ -203,6 +203,25 @@ def test():
     print(data)
     print(data['timestamp'])
 
+# 初始化加载训练数据
+def init_data():
+    global DF_NODE1_CPU_USAGE
+
+    node1_cpu_pct_usage_file = 'node1-system.cpu.pct_usage.txt'
+    f = open(node1_cpu_pct_usage_file, 'r', encoding='utf-8')
+    line = f.readline()
+    normal_data = []
+
+    while line:
+        # print(line, end='')
+        line = f.readline().strip()
+        fields = line.split(',')
+        if len(fields) > 1:
+            series = pd.Series({"value" : float(fields[3])}, name=timestampFormat(int(fields[0])) )
+            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( series )
+            print(DF_NODE1_CPU_USAGE)
+    f.close()
+
 if __name__ == '__main__':
     print("2022 CCB AIOPS Match by " + sys.argv[0])
     opts, args = getopt.getopt(sys.argv[1:], "m:h:", ["mode", "help"])
@@ -212,6 +231,8 @@ if __name__ == '__main__':
             print("Usage: python3 aimoyu.py -m PRODUCT/DEV")
         if o in ("-m", "--mode"):
             PROCESS_MODE = a
+
+    # init_data()
 
     if PROCESS_MODE == 'dev':
         local_consumer()
