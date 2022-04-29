@@ -1,5 +1,5 @@
 from kafka import KafkaConsumer
-import time, json, requests, os, random, sys
+import time, json, requests, os, random, sys, getopt
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
@@ -12,6 +12,10 @@ TICKET = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNTA3MzQ5Mjg3NzU0MTc4NjE4IiwiaWF0IjoxN
 NODE_FAILURE_TYPE = ['node 磁盘读IO消耗', 'node 磁盘空间消耗', 'node 磁盘写IO消耗', 'node 内存消耗', 'node节点CPU故障', 'node节点CPU爬升']
 SERVICE_FAILURE_TYPE = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器进程中止', 'k8s容器内存负载', 'k8s容器网络丢包', 'k8s容器网络延迟', 'k8s容器网络资源包损坏', 'k8s容器网络资源包重复发送', 'k8s容器写io负载']
 
+# 处理模式，调试用本地模式，部署用生产模式，默认为生产模式
+# pro 表示生产模式
+# dev 表示测试模式
+PROCESS_MODE = 'pro'
 
 # 记录提交日志
 def submit_log(message):
@@ -66,6 +70,10 @@ def kafka_consumer():
                 cpu_pct(data, i)
                 i = i + 1
 
+# 消费本地文件的方式，通过读取文件内容来分析异常点
+def local_consumer():
+    pass
+
         # if int(data['count']) > 100:
         #     i += 1
         #     print(data)
@@ -77,14 +85,20 @@ def kafka_consumer():
         # if int(data['count']) > 100:
         #     print(type(data), data)
 
+# 处理数据，按条接收并处理数据，屏蔽 Kafka 和本地文件的差异
+# 记录开始处理的时间，记录处理的数据量
+def data_process( data ):
+    pass
+
 # 分析CPU故障场景
 def cpu_pct(data, i):
     if float(data['value']) > 20:
         # node节点CPU故障
-        print(data)
+        # print(data)
         res = submit([data['cmdb_id'], SERVICE_FAILURE_TYPE[4]])
         log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
         log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+        log_message += 'Metric : ' + data + '\n'
         submit_log(log_message)
         print(res)
 
@@ -123,6 +137,15 @@ def test():
 
 if __name__ == '__main__':
     print("2022 CCB AIOPS Match by " + sys.argv[0])
+    opts, args = getopt.getopt(sys.argv[1:], "m:h:", ["mode", "help"])
+
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            print("Usage: python3 aimoyu.py -m PRODUCT/DEV")
+        if o in ("-m", "--mode"):
+            PROCESS_MODE = a
+
+    print(PROCESS_MODE)
     # 支持命令行参数，方便调试
     # kafka_consumer()
 # submit_log()
