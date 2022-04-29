@@ -111,6 +111,11 @@ def local_consumer():
 # 记录开始处理的时间，记录处理的数据量
 def data_process( data ):
     print(data)
+
+    adtk_cpu(data)
+    pass
+
+def adtk_cpu(data):
     pass
 
 # 分析CPU故障场景
