@@ -147,11 +147,16 @@ def adtk_cpu(data):
     if data['kpi_name'] == 'system.cpu.pct_usage': 
         if data['cmdb_id'] == 'node-1':
             # DF_NODE1_CPU_USAGE.index = DatetimeIndex
-            series = pd.Series({"timestamp":data['timestamp'],"cmdb_id":data['cmdb_id'], "value":data['value']}, name=timestampFormat(int(data['timestamp'])) )
+            series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
             DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( series )
             DF_NODE1_CPU_USAGE.index = pd.to_datetime(DF_NODE1_CPU_USAGE.index)
             print(DF_NODE1_CPU_USAGE)
             DF_NODE1_CPU_USAGE = validate_series(DF_NODE1_CPU_USAGE)
+
+            threshold_ad = ThresholdAD(high=20, low=0)
+            anomalies = threshold_ad.detect(DF_NODE1_CPU_USAGE)
+            print(anomalies)
+
 
 # 分析CPU故障场景
 def cpu_pct(data, i):
