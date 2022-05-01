@@ -25,12 +25,24 @@ class DetectObject( object, metaclass = MetaClass):
     NODE_LIST = ["node-1","node-2","node-3","node-4","node-5","node-6"]
     KPI_LIST = [ {"kpi_name":"system.cpu.pct_usage", "sample_time":1},{"kpi_name":"system.disk.pct_usage","sample_time":1}]
     START_TIME = ''
+    PD_LIST = {}
     
     def __init__(self):
-        print("Init")
-    
-    def getPd():
-        pass
+        for i in self.NODE_LIST:
+            # self.PD_LIST.append
+
+            kpi_dict = {}
+            for j in self.KPI_LIST:
+                j["pd"] = pd.DataFrame
+                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"] }
+
+            self.PD_LIST[i] = kpi_dict
+
+    def getPd(self, cmdb_id, kpi_name):
+        if self.PD_LIST[cmdb_id][kpi_name]:
+            return self.PD_LIST[cmdb_id][kpi_name]
+        else:
+            return False
 
     def getKpi(self):
         return self.KPI_LIST
@@ -545,7 +557,7 @@ if __name__ == '__main__':
 
     # init_data()
     obj_a = DetectObject()
-    print(obj_a.getKpi())
+    print(obj_a.getPd("node-1", "system.cpu.pct_usage"))
 
     if PROCESS_MODE == 'dev':
         local_consumer()
