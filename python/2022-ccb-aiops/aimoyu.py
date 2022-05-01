@@ -206,6 +206,12 @@ def data_process( data ):
 
 # 通用的异常检测方法，支持数据传入、指定 KPI 
 def adtk_common():
+    obj_a = DetectObject()
+
+    time.sleep(2)
+    print("adtk common code")
+    print(obj_a.getPd("node-1", "system.cpu.pct_usage"))
+
     pass
 
 # 使用 ADTK 方法计算磁盘消耗
@@ -555,9 +561,13 @@ if __name__ == '__main__':
         if o in ("-m", "--mode"):
             PROCESS_MODE = a
 
-    # init_data()
     obj_a = DetectObject()
-    print(obj_a.getPd("node-1", "system.cpu.pct_usage"))
+    opd = obj_a.getPd("node-1","system.cpu.pct_usage")
+    # print(pd["pd"])
+    opd["pd"] = opd["pd"].append( pd.Series( {"value" : 99}, name="11") )
+    
+    print(opd)
+    # obj_a["node-1"]["system.cpu.pct_usage"]["pd"] = pd
 
     if PROCESS_MODE == 'dev':
         local_consumer()
