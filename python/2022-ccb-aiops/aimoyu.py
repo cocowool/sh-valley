@@ -10,6 +10,31 @@ from adtk.detector import ThresholdAD
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
+# 定义一个单例通用对象，用于传入 kpi、检测方法、样本时间，以及保存指标的对象
+class MetaClass( type ):
+    def __init__(self, name, bases, dict):
+        super(MetaClass, self).__init__(name, bases, dict)
+        self._instance = None
+
+    def __call__(self, *args, **kwds):
+        if self._instance is None:
+            self._instance = super(MetaClass, self).__call__(*args, **kwds)
+        return self._instance
+
+class DetectObject( object, metaclass = MetaClass):
+    NODE_LIST = ["node-1","node-2","node-3","node-4","node-5","node-6"]
+    KPI_LIST = [ {"kpi_name":"system.cpu.pct_usage", "sample_time":1},{"kpi_name":"system.disk.pct_usage","sample_time":1}]
+    START_TIME = ''
+    
+    def __init__(self):
+        print("Init")
+    
+    def getPd():
+        pass
+
+    def getKpi(self):
+        return self.KPI_LIST
+
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
 
@@ -164,6 +189,12 @@ def data_process( data ):
 
     # adtk_cpu(data)
     adtk_disk(data)
+
+    adtk_common()
+
+# 通用的异常检测方法，支持数据传入、指定 KPI 
+def adtk_common():
+    pass
 
 # 使用 ADTK 方法计算磁盘消耗
 def adtk_disk(data):
@@ -513,6 +544,8 @@ if __name__ == '__main__':
             PROCESS_MODE = a
 
     # init_data()
+    obj_a = DetectObject()
+    print(obj_a.getKpi())
 
     if PROCESS_MODE == 'dev':
         local_consumer()
