@@ -26,6 +26,20 @@ PROCESS_MODE = 'pro'
 
 # CPU 数据的DataFrame存储
 DF_NODE1_CPU_USAGE = pd.DataFrame()
+DF_NODE2_CPU_USAGE = pd.DataFrame()
+DF_NODE3_CPU_USAGE = pd.DataFrame()
+DF_NODE4_CPU_USAGE = pd.DataFrame()
+DF_NODE5_CPU_USAGE = pd.DataFrame()
+DF_NODE6_CPU_USAGE = pd.DataFrame()
+SUBMIT_COUNT = 0
+
+# DISK 数据的DataFrame存储
+DF_NODE1_DISK_USAGE = pd.DataFrame()
+DF_NODE2_DISK_USAGE = pd.DataFrame()
+DF_NODE3_DISK_USAGE = pd.DataFrame()
+DF_NODE4_DISK_USAGE = pd.DataFrame()
+DF_NODE5_DISK_USAGE = pd.DataFrame()
+DF_NODE6_DISK_USAGE = pd.DataFrame()
 
 # 将时间戳转换为可读时间格式
 def timestampFormat(timestamp):
@@ -37,6 +51,14 @@ def timestampFormat(timestamp):
 
 # 记录提交日志
 def submit_log(message):
+    global PROCESS_MODE
+    # print("--------------------")
+    # print("Function in submit_log")
+    # print("--------------------")
+
+    if PROCESS_MODE == 'dev':
+        return "Dev Env"
+
     startname = time.strftime('%Y%m%d', time.localtime(time.time()))
     log_path = '/data/logs/'
     # log_path = './'
@@ -50,6 +72,14 @@ def submit_log(message):
 
 # 结果提交代码
 def submit(ctx):
+    global PROCESS_MODE
+    # print("--------------------")
+    # print("Function in submit_log")
+    # print("--------------------")
+
+    if PROCESS_MODE == 'dev':
+        return "Dev Env"
+
     assert (isinstance(ctx, list))
     assert (len(ctx) == 2)
     assert (isinstance(ctx[0], str))
@@ -132,7 +162,147 @@ def local_consumer():
 def data_process( data ):
     # print(data)
 
-    adtk_cpu(data)
+    # adtk_cpu(data)
+    adtk_disk(data)
+
+# 使用 ADTK 方法计算磁盘消耗
+def adtk_disk(data):
+    # 不是目标数据的，不计算直接返回
+    if not data.__contains__('kpi_name'):
+        return
+
+    global DF_NODE1_DISK_USAGE
+    global DF_NODE2_DISK_USAGE
+    global DF_NODE3_DISK_USAGE
+    global DF_NODE4_DISK_USAGE
+    global DF_NODE5_DISK_USAGE
+    global DF_NODE6_DISK_USAGE
+    global SUBMIT_COUNT
+
+    # print(data)
+    time.sleep(0.01)
+    # print(data['kpi_name'])
+    if data['kpi_name'] == 'system.disk.pct_usage': 
+        print(data)
+        if data['cmdb_id'] == 'node-1':
+            # DF_NODE1_DISK_USAGE.index = DatetimeIndex
+            node1_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE1_DISK_USAGE = DF_NODE1_DISK_USAGE.append( node1_series )
+            DF_NODE1_DISK_USAGE.index = pd.to_datetime(DF_NODE1_DISK_USAGE.index)
+            # print(DF_NODE1_DISK_USAGE)
+
+            DF_NODE1_DISK_USAGE = validate_series(DF_NODE1_DISK_USAGE)
+            node1_threshold_ad = ThresholdAD(high=20, low=0)
+            node1_anomalies = node1_threshold_ad.detect(DF_NODE1_DISK_USAGE)
+
+            if node1_anomalies['value'].loc[node1_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[1]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[1] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-2':
+            # DF_NODE1_DISK_USAGE.index = DatetimeIndex
+            node2_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE2_DISK_USAGE = DF_NODE2_DISK_USAGE.append( node2_series )
+            DF_NODE2_DISK_USAGE.index = pd.to_datetime(DF_NODE2_DISK_USAGE.index)
+            # print(DF_NODE1_DISK_USAGE)
+
+            DF_NODE2_DISK_USAGE = validate_series(DF_NODE2_DISK_USAGE)
+            node2_threshold_ad = ThresholdAD(high=20, low=0)
+            node2_anomalies = node2_threshold_ad.detect(DF_NODE2_DISK_USAGE)
+
+            if node2_anomalies['value'].loc[node2_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[1]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[1] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-3':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node3_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE3_DISK_USAGE = DF_NODE3_DISK_USAGE.append( node3_series )
+            DF_NODE3_DISK_USAGE.index = pd.to_datetime(DF_NODE3_DISK_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE3_DISK_USAGE = validate_series(DF_NODE3_DISK_USAGE)
+            node3_threshold_ad = ThresholdAD(high=20, low=0)
+            node3_anomalies = node3_threshold_ad.detect(DF_NODE3_DISK_USAGE)
+
+            if node3_anomalies['value'].loc[node3_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[1]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[1] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-4':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node4_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE4_DISK_USAGE = DF_NODE4_DISK_USAGE.append( node4_series )
+            DF_NODE4_DISK_USAGE.index = pd.to_datetime(DF_NODE4_DISK_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE4_DISK_USAGE = validate_series(DF_NODE4_DISK_USAGE)
+            node4_threshold_ad = ThresholdAD(high=20, low=0)
+            node4_anomalies = node4_threshold_ad.detect(DF_NODE4_DISK_USAGE)
+
+            if node4_anomalies['value'].loc[node4_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[1]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[1] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-5':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node5_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE5_DISK_USAGE = DF_NODE5_DISK_USAGE.append( node5_series )
+            DF_NODE5_DISK_USAGE.index = pd.to_datetime(DF_NODE5_DISK_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE5_DISK_USAGE = validate_series(DF_NODE5_DISK_USAGE)
+            node5_threshold_ad = ThresholdAD(high=20, low=0)
+            node5_anomalies = node5_threshold_ad.detect(DF_NODE5_DISK_USAGE)
+
+            if node5_anomalies['value'].loc[node5_anomalies.index[-1]] == True:
+                print('Prepare Submit')
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[1]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[1] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-6':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node6_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE6_DISK_USAGE = DF_NODE6_DISK_USAGE.append( node6_series )
+            DF_NODE6_DISK_USAGE.index = pd.to_datetime(DF_NODE6_DISK_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE6_DISK_USAGE = validate_series(DF_NODE6_DISK_USAGE)
+            node6_threshold_ad = ThresholdAD(high=20, low=0)
+            node6_anomalies = node6_threshold_ad.detect(DF_NODE6_DISK_USAGE)
+
+            if node6_anomalies['value'].loc[node6_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[1]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[1] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+
+# 使用 ADTK 方法计算内存指标
+def adtk_mem(data):
+    pass
 
 # 使用 ADTK 方法计算CPU指标
 def adtk_cpu(data):
@@ -141,22 +311,132 @@ def adtk_cpu(data):
         return
 
     global DF_NODE1_CPU_USAGE
+    global DF_NODE2_CPU_USAGE
+    global DF_NODE3_CPU_USAGE
+    global DF_NODE4_CPU_USAGE
+    global DF_NODE5_CPU_USAGE
+    global DF_NODE6_CPU_USAGE
+    global SUBMIT_COUNT
+
     # print(data)
-    time.sleep(0.01)
+    # time.sleep(0.01)
     # print(data['kpi_name'])
     if data['kpi_name'] == 'system.cpu.pct_usage': 
+        print(data)
         if data['cmdb_id'] == 'node-1':
             # DF_NODE1_CPU_USAGE.index = DatetimeIndex
-            series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
-            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( series )
+            node1_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( node1_series )
             DF_NODE1_CPU_USAGE.index = pd.to_datetime(DF_NODE1_CPU_USAGE.index)
-            print(DF_NODE1_CPU_USAGE)
+            # print(DF_NODE1_CPU_USAGE)
+
             DF_NODE1_CPU_USAGE = validate_series(DF_NODE1_CPU_USAGE)
+            node1_threshold_ad = ThresholdAD(high=20, low=0)
+            node1_anomalies = node1_threshold_ad.detect(DF_NODE1_CPU_USAGE)
 
-            threshold_ad = ThresholdAD(high=20, low=0)
-            anomalies = threshold_ad.detect(DF_NODE1_CPU_USAGE)
-            print(anomalies)
+            if node1_anomalies['value'].loc[node1_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[4]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-2':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node2_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE2_CPU_USAGE = DF_NODE2_CPU_USAGE.append( node2_series )
+            DF_NODE2_CPU_USAGE.index = pd.to_datetime(DF_NODE2_CPU_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
 
+            DF_NODE2_CPU_USAGE = validate_series(DF_NODE2_CPU_USAGE)
+            node2_threshold_ad = ThresholdAD(high=20, low=0)
+            node2_anomalies = node2_threshold_ad.detect(DF_NODE2_CPU_USAGE)
+
+            if node2_anomalies['value'].loc[node2_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[4]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-3':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node3_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE3_CPU_USAGE = DF_NODE3_CPU_USAGE.append( node3_series )
+            DF_NODE3_CPU_USAGE.index = pd.to_datetime(DF_NODE3_CPU_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE3_CPU_USAGE = validate_series(DF_NODE3_CPU_USAGE)
+            node3_threshold_ad = ThresholdAD(high=20, low=0)
+            node3_anomalies = node3_threshold_ad.detect(DF_NODE3_CPU_USAGE)
+
+            if node3_anomalies['value'].loc[node3_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[4]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-4':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node4_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE4_CPU_USAGE = DF_NODE4_CPU_USAGE.append( node4_series )
+            DF_NODE4_CPU_USAGE.index = pd.to_datetime(DF_NODE4_CPU_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE4_CPU_USAGE = validate_series(DF_NODE4_CPU_USAGE)
+            node4_threshold_ad = ThresholdAD(high=20, low=0)
+            node4_anomalies = node4_threshold_ad.detect(DF_NODE4_CPU_USAGE)
+
+            if node4_anomalies['value'].loc[node4_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[4]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-5':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node5_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE5_CPU_USAGE = DF_NODE5_CPU_USAGE.append( node5_series )
+            DF_NODE5_CPU_USAGE.index = pd.to_datetime(DF_NODE5_CPU_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE5_CPU_USAGE = validate_series(DF_NODE5_CPU_USAGE)
+            node5_threshold_ad = ThresholdAD(high=20, low=0)
+            node5_anomalies = node5_threshold_ad.detect(DF_NODE5_CPU_USAGE)
+
+            if node5_anomalies['value'].loc[node5_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[4]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
+        elif data['cmdb_id'] == 'node-6':
+            # DF_NODE1_CPU_USAGE.index = DatetimeIndex
+            node6_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+            DF_NODE6_CPU_USAGE = DF_NODE6_CPU_USAGE.append( node6_series )
+            DF_NODE6_CPU_USAGE.index = pd.to_datetime(DF_NODE6_CPU_USAGE.index)
+            # print(DF_NODE1_CPU_USAGE)
+
+            DF_NODE6_CPU_USAGE = validate_series(DF_NODE6_CPU_USAGE)
+            node6_threshold_ad = ThresholdAD(high=20, low=0)
+            node6_anomalies = node6_threshold_ad.detect(DF_NODE6_CPU_USAGE)
+
+            if node6_anomalies['value'].loc[node6_anomalies.index[-1]] == True:
+                res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[4]])
+                log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
+                log_message += 'Metric : ' + json.dumps(data) + '\n'
+                submit_log(log_message)
+                print(res)
+                SUBMIT_COUNT += 1
 
 # 分析CPU故障场景
 def cpu_pct(data, i):
