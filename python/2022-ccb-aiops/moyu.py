@@ -256,17 +256,21 @@ def plt_metrics():
     
     node_list = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5']
     colors = ['red', 'blue', 'green', 'orange', 'black']
-    cloud_error = {1647754788:'node-4,node CPU FAIL', 1647755511: 'node-6,node CPU FAIL', 1647767561:'node-4,node CPU UP'}
+    # CPU 故障
+    # cloud_error = {1647754788:'node-4,node CPU FAIL', 1647755511: 'node-6,node CPU FAIL', 1647767561:'node-4,node CPU UP'}
+    # 磁盘故障
+    cloud_error = {1647749271: 'node-1, disk read io error', 1647753199: 'node-2 disk write io error', 1647769222: 'node-5 disk write io error', 1647776146: 'node-4, disk read io error', 1647784337: 'node-1, disk space error', 1647788164: 'node-3, disk read io error'}
 
-    print(cloud_error[1647754788])
-    for i in cloud_error:
-        print(i)
+    # print(cloud_error[1647754788])
+    # for i in cloud_error:
+    #     print(i)
 
     # print( df['value'].max() )
 
     kpi_list = df['kpi_name'].unique()
     for subplot in range(0, len(kpi_list)):
-        if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
+        if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
+        # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
             print(kpi_list[subplot])
 
             fig = plt.figure(figsize=(14,8))
@@ -306,14 +310,14 @@ if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    # plt_metrics()
+    plt_metrics()
 
     # load_heads()
     # print("Test")
     # adtk_test()
 
     # 根据指标加载正常数据
-    prepare_data()
+    # prepare_data()
 
     # # 加载合并后的 groundtruth 文件
     # groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/all_groundtruth.csv'
