@@ -7,6 +7,10 @@ from adtk.transformer import RollingAggregate
 from adtk.transformer import DoubleRollingAggregate
 from adtk.visualization import plot
 from adtk.detector import ThresholdAD
+from adtk.detector import QuantileAD
+from adtk.detector import GeneralizedESDTestAD
+from adtk.detector import LevelShiftAD
+from adtk.detector import VolatilityShiftAD
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
@@ -22,8 +26,17 @@ class MetaClass( type ):
         return self._instance
 
 class DetectObject( object, metaclass = MetaClass):
-    NODE_LIST = ["node-1","node-2","node-3","node-4","node-5","node-6"]
-    KPI_LIST = [ {"kpi_name":"system.cpu.pct_usage", "sample_time":1},{"kpi_name":"system.disk.pct_usage","sample_time":1}]
+    NODE_LIST = [
+        "node-1",
+        "node-2",
+        "node-3",
+        "node-4",
+        "node-5",
+        "node-6"]
+    KPI_LIST = [ 
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":120},
+        {"kpi_name":"system.disk.pct_usage","sample_time":120}
+        ]
     START_TIME = ''
     PD_LIST = {}
     
@@ -34,7 +47,7 @@ class DetectObject( object, metaclass = MetaClass):
             kpi_dict = {}
             for j in self.KPI_LIST:
                 j["pd"] = pd.DataFrame
-                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"] }
+                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0 }
 
             self.PD_LIST[i] = kpi_dict
 
@@ -43,6 +56,9 @@ class DetectObject( object, metaclass = MetaClass):
             return self.PD_LIST[cmdb_id][kpi_name]
         else:
             return False
+
+    def setPd(self, cmdb_id, kpi_name, pd):
+        self.PD_LIST[cmdb_id][kpi_name] = pd 
 
     def getKpi(self):
         return self.KPI_LIST
@@ -200,7 +216,7 @@ def data_process( data ):
     # print(data)
 
     # adtk_cpu(data)
-    adtk_disk(data)
+    # adtk_disk(data)
 
     adtk_common(data)
 
@@ -208,13 +224,38 @@ def data_process( data ):
 def adtk_common(data):
     obj_a = DetectObject()
 
-    time.sleep(2)
 
     if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
-        print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
+        t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+        apd = obj_a.getPd(data['cmdb_id'], data['kpi_name'])
+        apd["pd"] = apd["pd"].append( t_series )
+        apd["sample_count"] = apd["sample_count"] + 1
+
+        if apd['sample_count'] > apd['sample_time']:
+            apd["pd"].index = pd.to_datetime( apd["pd"].index )
+            apd["pd"] = validate_series( apd["pd"] )
+            # threshold_ad = QuantileAD(high=0.98, low=0)
+            # threshold_ad = GeneralizedESDTestAD(alpha=0.3)
+            threshold_ad = LevelShiftAD(c=5.0, side='positive', window=1)
+            # threshold_ad = VolatilityShiftAD(c=5.0, side='positive', window=5)
+            print( data['cmdb_id'] + "-" + data['kpi_name'] + "," + str( len(apd["pd"]) ))
+            anomalies = threshold_ad.fit_detect( apd["pd"] )
+
+            if anomalies['value'].loc[anomalies.index[-1]] == True:
+                print("Anomaly Data Detected ==============")
+                print(data)
+                print(data['cmdb_id'] + "-" + data['kpi_name'])
+                print(apd)
+        # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
+            # time.sleep(2)
+
+        # print(data['cmdb_id'] + "-" + data['kpi_name'])
+        # print(apd)
+        # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
     else:
-        print( data )
-        print( "No preset algorithm, continue !")
+        pass
+        # print( data )
+        # print( "No preset algorithm, continue !")
 
 # 使用 ADTK 方法计算磁盘消耗
 def adtk_disk(data):
