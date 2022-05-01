@@ -39,7 +39,7 @@ class DetectObject( object, metaclass = MetaClass):
             self.PD_LIST[i] = kpi_dict
 
     def getPd(self, cmdb_id, kpi_name):
-        if self.PD_LIST[cmdb_id][kpi_name]:
+        if cmdb_id in self.PD_LIST and kpi_name in self.PD_LIST[cmdb_id]:
             return self.PD_LIST[cmdb_id][kpi_name]
         else:
             return False
@@ -202,17 +202,19 @@ def data_process( data ):
     # adtk_cpu(data)
     adtk_disk(data)
 
-    adtk_common()
+    adtk_common(data)
 
 # 通用的异常检测方法，支持数据传入、指定 KPI 
-def adtk_common():
+def adtk_common(data):
     obj_a = DetectObject()
 
     time.sleep(2)
-    print("adtk common code")
-    print(obj_a.getPd("node-1", "system.cpu.pct_usage"))
 
-    pass
+    if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
+        print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
+    else:
+        print( data )
+        print( "No preset algorithm, continue !")
 
 # 使用 ADTK 方法计算磁盘消耗
 def adtk_disk(data):
@@ -562,12 +564,8 @@ if __name__ == '__main__':
             PROCESS_MODE = a
 
     obj_a = DetectObject()
-    opd = obj_a.getPd("node-1","system.cpu.pct_usage")
-    # print(pd["pd"])
-    opd["pd"] = opd["pd"].append( pd.Series( {"value" : 99}, name="11") )
-    
-    print(opd)
-    # obj_a["node-1"]["system.cpu.pct_usage"]["pd"] = pd
+    # opd = obj_a.getPd("node-1","system.cpu.pct_usage")
+    # opd["pd"] = opd["pd"].append( pd.Series( {"value" : 99}, name="11") )
 
     if PROCESS_MODE == 'dev':
         local_consumer()
