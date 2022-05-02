@@ -11,6 +11,7 @@ from adtk.detector import QuantileAD
 from adtk.detector import GeneralizedESDTestAD
 from adtk.detector import LevelShiftAD
 from adtk.detector import VolatilityShiftAD
+from adtk.detector import CustomizedDetectorHD
 
 # 作为比赛专用调试代码，尝试提交并记录日志
 
@@ -35,7 +36,9 @@ class DetectObject( object, metaclass = MetaClass):
         "node-6"]
     KPI_LIST = [ 
         # {"kpi_name":"system.cpu.pct_usage", "sample_time":120},
-        {"kpi_name":"system.disk.pct_usage","sample_time":120}
+        {"kpi_name":"system.io.avg_q_sz","sample_time":120}
+        # system.io.rkb_s 设备每秒读的 kibibytes 的数量
+        # {"kpi_name":"system.disk.pct_usage","sample_time":120}
         ]
     START_TIME = ''
     PD_LIST = {}
@@ -47,7 +50,7 @@ class DetectObject( object, metaclass = MetaClass):
             kpi_dict = {}
             for j in self.KPI_LIST:
                 j["pd"] = pd.DataFrame
-                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0 }
+                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0 }
 
             self.PD_LIST[i] = kpi_dict
 
@@ -62,6 +65,10 @@ class DetectObject( object, metaclass = MetaClass):
 
     def getKpi(self):
         return self.KPI_LIST
+
+# 为比赛创建的数据异常检测类
+class MoyuDetector():
+    pass
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -93,6 +100,35 @@ DF_NODE3_DISK_USAGE = pd.DataFrame()
 DF_NODE4_DISK_USAGE = pd.DataFrame()
 DF_NODE5_DISK_USAGE = pd.DataFrame()
 DF_NODE6_DISK_USAGE = pd.DataFrame()
+
+# MERGE Frome Wanglei
+#system.mem.pct_usage 数据的DataFrame存储---用于推理“node 内存消耗”故障
+NODE1_MEM_PCT_USAGE = [] #记录每个节点的一段时间内内内存使用率的数值
+NODE2_MEM_PCT_USAGE = []
+NODE3_MEM_PCT_USAGE = []
+NODE4_MEM_PCT_USAGE = []
+NODE5_MEM_PCT_USAGE = []
+NODE6_MEM_PCT_USAGE = []
+NODE1_LAST_MAX_MINUS_MIN=0   #记录每个节点的内存使用率最大和最小之间的差
+NODE1_CURRENT_MAX_MINUS_MIN=0
+NODE2_LAST_MAX_MINUS_MIN=0
+NODE2_CURRENT_MAX_MINUS_MIN=0
+NODE3_LAST_MAX_MINUS_MIN=0
+NODE3_CURRENT_MAX_MINUS_MIN=0
+NODE4_LAST_MAX_MINUS_MIN=0
+NODE4_CURRENT_MAX_MINUS_MIN=0
+NODE5_LAST_MAX_MINUS_MIN=0
+NODE5_CURRENT_MAX_MINUS_MIN=0
+NODE6_LAST_MAX_MINUS_MIN=0
+NODE6_CURRENT_MAX_MINUS_MIN=0
+NODE1_MEM_PROCESS_CNT=0  #处理计数，超过某个值后认为MAX-MIN基本平滑，不应有大的跳跃
+NODE2_MEM_PROCESS_CNT=0
+NODE3_MEM_PROCESS_CNT=0
+NODE4_MEM_PROCESS_CNT=0
+NODE5_MEM_PROCESS_CNT=0
+NODE6_MEM_PROCESS_CNT=0
+# MERGE Frome Wanglei 
+
 
 # 将时间戳转换为可读时间格式
 def timestampFormat(timestamp):
@@ -218,8 +254,204 @@ def data_process( data ):
     # adtk_cpu(data)
     # adtk_disk(data)
 
-    adtk_common(data)
+    # adtk_common(data)
 
+    # MERGE From Wanglei
+    maxmin_node_mem(data)
+    # MERGE From Wanglei End
+
+
+# MERGE From Wanglei
+# 使用峰谷阶跃方法计算node 内存消耗  故障
+def maxmin_node_mem(data):
+    # 不是目标数据的，不计算直接返回
+    if not data.__contains__('kpi_name'):
+        return
+    global NODE1_MEM_PCT_USAGE  
+    global NODE2_MEM_PCT_USAGE
+    global NODE3_MEM_PCT_USAGE
+    global NODE4_MEM_PCT_USAGE
+    global NODE5_MEM_PCT_USAGE
+    global NODE6_MEM_PCT_USAGE
+    global NODE1_LAST_MAX_MINUS_MIN
+    global NODE1_CURRENT_MAX_MINUS_MIN
+    global NODE2_LAST_MAX_MINUS_MIN
+    global NODE2_CURRENT_MAX_MINUS_MIN
+    global NODE3_LAST_MAX_MINUS_MIN
+    global NODE3_CURRENT_MAX_MINUS_MIN
+    global NODE4_LAST_MAX_MINUS_MIN
+    global NODE4_CURRENT_MAX_MINUS_MIN
+    global NODE5_LAST_MAX_MINUS_MIN
+    global NODE5_CURRENT_MAX_MINUS_MIN
+    global NODE6_LAST_MAX_MINUS_MIN
+    global NODE6_CURRENT_MAX_MINUS_MIN
+    global NODE1_MEM_PROCESS_CNT
+    global NODE2_MEM_PROCESS_CNT
+    global NODE3_MEM_PROCESS_CNT
+    global NODE4_MEM_PROCESS_CNT
+    global NODE5_MEM_PROCESS_CNT
+    global NODE6_MEM_PROCESS_CNT
+    global SUBMIT_COUNT
+    window_size=120 #平滑的内存最大值和最小值之差的窗口，目前设置为2小时
+    if data['kpi_name'] == 'system.mem.pct_usage':
+        global PROCESS_MODE
+
+        if PROCESS_MODE == 'dev':
+            f = open('/Users/shiqiang/Projects/sh-valley/python/2022-ccb-aiops/wldebug.log', 'a')
+        else:
+            f = open('/data/logs/wldebug.log','a')
+
+       #f.write('function  maxmin_node_mem  get  system.mem.pct_usage \n')
+        f.write(str(data)+'\n')
+##        with open ('/data/logs/wl.log') as f:
+##            print（'func----maxmin_node_mem----',f）
+##            print(data,f)
+        if data['cmdb_id'] == 'node-1':
+
+            NODE1_MEM_PCT_USAGE.append(float(data['value']))
+            NODE1_MEM_PROCESS_CNT+=1
+            if NODE1_MEM_PROCESS_CNT>window_size:
+                NODE1_MEM_PCT_USAGE.reverse()
+                NODE1_MEM_PCT_USAGE.pop()
+                NODE1_MEM_PCT_USAGE.reverse()
+              
+                NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
+                NODE1_CURRENT_MAX_MINUS_MIN=max(NODE1_MEM_PCT_USAGE)-min(NODE1_MEM_PCT_USAGE)
+                if(NODE1_LAST_MAX_MINUS_MIN)==0:
+                    NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
+
+                f.write('NODE1-MAX/MIN'+','+str(NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN)+'\n')
+                
+                if NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN>1.7:
+                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+                    log_message += 'Metric : ' + json.dumps(data) + '\n'
+                    submit_log(log_message)
+                    SUBMIT_COUNT += 1
+                    
+        elif data['cmdb_id'] == 'node-2':
+            NODE2_MEM_PCT_USAGE.append(float(data['value']))
+            NODE2_MEM_PROCESS_CNT+=1
+            if NODE2_MEM_PROCESS_CNT>window_size:
+                NODE2_MEM_PCT_USAGE.reverse()
+                NODE2_MEM_PCT_USAGE.pop()
+                NODE2_MEM_PCT_USAGE.reverse()
+        
+                NODE2_LAST_MAX_MINUS_MIN=NODE2_CURRENT_MAX_MINUS_MIN
+                NODE2_CURRENT_MAX_MINUS_MIN=max(NODE2_MEM_PCT_USAGE)-min(NODE2_MEM_PCT_USAGE)
+                if(NODE2_LAST_MAX_MINUS_MIN)==0:
+                    NODE2_LAST_MAX_MINUS_MIN=NODE2_CURRENT_MAX_MINUS_MIN
+                
+                f.write('NODE2-MAX/MIN'+','+str(NODE2_CURRENT_MAX_MINUS_MIN/NODE2_LAST_MAX_MINUS_MIN)+'\n')
+                
+                if NODE2_CURRENT_MAX_MINUS_MIN/NODE2_LAST_MAX_MINUS_MIN>1.7:
+                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+                    log_message += 'Metric : ' + json.dumps(data) + '\n'
+                    submit_log(log_message)
+                    SUBMIT_COUNT += 1
+      
+        elif data['cmdb_id'] == 'node-3':
+            NODE3_MEM_PCT_USAGE.append(float(data['value']))
+            NODE3_MEM_PROCESS_CNT+=1
+            if NODE3_MEM_PROCESS_CNT>window_size:
+                NODE3_MEM_PCT_USAGE.reverse()
+                NODE3_MEM_PCT_USAGE.pop()
+                NODE3_MEM_PCT_USAGE.reverse()
+                #f.write(NODE3_MEM_PCT_USAGE)
+                NODE3_LAST_MAX_MINUS_MIN=NODE3_CURRENT_MAX_MINUS_MIN
+                NODE3_CURRENT_MAX_MINUS_MIN=max(NODE3_MEM_PCT_USAGE)-min(NODE3_MEM_PCT_USAGE)
+                if(NODE3_LAST_MAX_MINUS_MIN)==0:
+                    NODE3_LAST_MAX_MINUS_MIN=NODE3_CURRENT_MAX_MINUS_MIN
+
+                f.write('NODE3-MAX/MIN'+','+str(NODE3_CURRENT_MAX_MINUS_MIN/NODE3_LAST_MAX_MINUS_MIN)+'\n')
+                    
+                if NODE3_CURRENT_MAX_MINUS_MIN/NODE3_LAST_MAX_MINUS_MIN>1.7:
+                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+                    log_message += 'Metric : ' + json.dumps(data) + '\n'
+                    submit_log(log_message)
+                    SUBMIT_COUNT += 1
+   
+        elif data['cmdb_id'] == 'node-4':
+            NODE4_MEM_PCT_USAGE.append(float(data['value']))
+            NODE4_MEM_PROCESS_CNT+=1
+            if NODE4_MEM_PROCESS_CNT>window_size:
+                NODE4_MEM_PCT_USAGE.reverse()
+                NODE4_MEM_PCT_USAGE.pop()
+                NODE4_MEM_PCT_USAGE.reverse()
+                #f.write(NODE4_MEM_PCT_USAGE)
+                NODE4_LAST_MAX_MINUS_MIN=NODE4_CURRENT_MAX_MINUS_MIN
+                NODE4_CURRENT_MAX_MINUS_MIN=max(NODE4_MEM_PCT_USAGE)-min(NODE4_MEM_PCT_USAGE)
+                if(NODE4_LAST_MAX_MINUS_MIN)==0:
+                    NODE4_LAST_MAX_MINUS_MIN=NODE4_CURRENT_MAX_MINUS_MIN
+
+                f.write('NODE4-MAX/MIN'+','+str(NODE4_CURRENT_MAX_MINUS_MIN/NODE4_LAST_MAX_MINUS_MIN)+'\n')
+                
+                if NODE4_CURRENT_MAX_MINUS_MIN/NODE4_LAST_MAX_MINUS_MIN>1.7:
+                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+                    log_message += 'Metric : ' + json.dumps(data) + '\n'
+                    submit_log(log_message)
+                    SUBMIT_COUNT += 1
+     
+        elif data['cmdb_id'] == 'node-5':
+            NODE5_MEM_PCT_USAGE.append(float(data['value']))
+            NODE5_MEM_PROCESS_CNT+=1
+            if NODE5_MEM_PROCESS_CNT>window_size:
+                NODE5_MEM_PCT_USAGE.reverse()
+                NODE5_MEM_PCT_USAGE.pop()
+                NODE5_MEM_PCT_USAGE.reverse()
+                #f.write(NODE5_MEM_PCT_USAGE)
+                NODE5_LAST_MAX_MINUS_MIN=NODE5_CURRENT_MAX_MINUS_MIN
+                NODE5_CURRENT_MAX_MINUS_MIN=max(NODE5_MEM_PCT_USAGE)-min(NODE5_MEM_PCT_USAGE)
+                if(NODE5_LAST_MAX_MINUS_MIN)==0:
+                    NODE5_LAST_MAX_MINUS_MIN=NODE5_CURRENT_MAX_MINUS_MIN
+
+                f.write('NODE5-MAX/MIN'+','+str(NODE5_CURRENT_MAX_MINUS_MIN/NODE5_LAST_MAX_MINUS_MIN)+'\n') 
+                    
+                if NODE5_CURRENT_MAX_MINUS_MIN/NODE5_LAST_MAX_MINUS_MIN>1.7:
+                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+                    log_message += 'Metric : ' + json.dumps(data) + '\n'
+                    submit_log(log_message)
+                    SUBMIT_COUNT += 1
+    
+        elif data['cmdb_id'] == 'node-6':
+            NODE6_MEM_PCT_USAGE.append(float(data['value']))
+            NODE6_MEM_PROCESS_CNT+=1
+            if NODE6_MEM_PROCESS_CNT>window_size:
+                NODE6_MEM_PCT_USAGE.reverse()
+                NODE6_MEM_PCT_USAGE.pop()
+                NODE6_MEM_PCT_USAGE.reverse()
+                #f.write(NODE6_MEM_PCT_USAGE)
+                NODE6_LAST_MAX_MINUS_MIN=NODE6_CURRENT_MAX_MINUS_MIN
+                NODE6_CURRENT_MAX_MINUS_MIN=max(NODE6_MEM_PCT_USAGE)-min(NODE1_MEM_PCT_USAGE)
+                if(NODE6_LAST_MAX_MINUS_MIN)==0:
+                    NODE6_LAST_MAX_MINUS_MIN=NODE6_CURRENT_MAX_MINUS_MIN
+
+                f.write('NODE6-MAX/MIN'+','+str(NODE6_CURRENT_MAX_MINUS_MIN/NODE6_LAST_MAX_MINUS_MIN)+'\n')
+                    
+                if NODE6_CURRENT_MAX_MINUS_MIN/NODE6_LAST_MAX_MINUS_MIN>1.7:
+                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+                    log_message += 'Metric : ' + json.dumps(data) + '\n'
+                    submit_log(log_message)
+                    SUBMIT_COUNT += 1
+        f.close()
+     
+# MERGE From Wanglei End
+
+# 自己编写的异常检测程序
+def SimpleDetect( df ):
+    return (df['value'] > 20 )
+        
 # 通用的异常检测方法，支持数据传入、指定 KPI 
 def adtk_common(data):
     obj_a = DetectObject()
@@ -236,13 +468,16 @@ def adtk_common(data):
             apd["pd"] = validate_series( apd["pd"] )
             # threshold_ad = QuantileAD(high=0.98, low=0)
             # threshold_ad = GeneralizedESDTestAD(alpha=0.3)
-            threshold_ad = LevelShiftAD(c=5.0, side='positive', window=1)
+            # threshold_ad = LevelShiftAD(c=5.0, side='positive', window=1)
             # threshold_ad = VolatilityShiftAD(c=5.0, side='positive', window=5)
+            threshold_ad = CustomizedDetectorHD(detect_func=SimpleDetect)
             print( data['cmdb_id'] + "-" + data['kpi_name'] + "," + str( len(apd["pd"]) ))
-            anomalies = threshold_ad.fit_detect( apd["pd"] )
+            # anomalies = threshold_ad.fit_detect( apd["pd"] )
+            anomalies = threshold_ad.detect( apd["pd"] )
 
             if anomalies['value'].loc[anomalies.index[-1]] == True:
                 print("Anomaly Data Detected ==============")
+                apd["submit_count"] = apd["submit_count"] + 1
                 print(data)
                 print(data['cmdb_id'] + "-" + data['kpi_name'])
                 print(apd)
@@ -612,6 +847,8 @@ if __name__ == '__main__':
         local_consumer()
     else:
         kafka_consumer()
+
+    # print(obj_a)
 
     # print(PROCESS_MODE)
     # 支持命令行参数，方便调试
