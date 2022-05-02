@@ -35,10 +35,11 @@ class DetectObject( object, metaclass = MetaClass):
         "node-5",
         "node-6"]
     KPI_LIST = [ 
-        # {"kpi_name":"system.cpu.pct_usage", "sample_time":120},
-        # {"kpi_name":"system.io.avg_q_sz","sample_time":120},
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障"},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        {"kpi_name":"system.io.rkb_s","sample_time":120, "failure_type":"node 磁盘读IO消耗"},
+        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
+        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
+        # {"kpi_name":"system.io.avg_q_sz","sample_time":120},
         # {"kpi_name":"system.disk.pct_usage","sample_time":120}
         ]
     START_TIME = ''
@@ -522,6 +523,33 @@ def adtk_common(data):
                         apd["prev_timestamp"] = data['timestamp']
                     elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
                         apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'system.io.await':
+                if float(data['value']) > 45:
+                    if apd["prev_timestamp"] == 0:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
+                        apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'system.cpu.pct_usage':
+                if float(data['value']) > 60:
+                    if apd["prev_timestamp"] == 0:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
+                        apd["prev_timestamp"] = data['timestamp']
+
         # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
             # time.sleep(2)
 
