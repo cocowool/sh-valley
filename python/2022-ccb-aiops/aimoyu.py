@@ -36,8 +36,9 @@ class DetectObject( object, metaclass = MetaClass):
         "node-6"]
     KPI_LIST = [ 
         # {"kpi_name":"system.cpu.pct_usage", "sample_time":120},
-        {"kpi_name":"system.io.avg_q_sz","sample_time":120}
+        # {"kpi_name":"system.io.avg_q_sz","sample_time":120},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
+        {"kpi_name":"system.io.rkb_s","sample_time":120, "failure_type":"node 磁盘读IO消耗"},
         # {"kpi_name":"system.disk.pct_usage","sample_time":120}
         ]
     START_TIME = ''
@@ -50,7 +51,7 @@ class DetectObject( object, metaclass = MetaClass):
             kpi_dict = {}
             for j in self.KPI_LIST:
                 j["pd"] = pd.DataFrame
-                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0 }
+                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0, "prev_timestamp" : 0, "failure_type":j["failure_type"] }
 
             self.PD_LIST[i] = kpi_dict
 
@@ -68,7 +69,11 @@ class DetectObject( object, metaclass = MetaClass):
 
 # 为比赛创建的数据异常检测类
 class MoyuDetector():
-    pass
+    def stdMean( self, df ):
+        anomalies = []
+        data_std = df.std()
+        print(data_std)
+        time.sleep(10)
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -146,6 +151,7 @@ def submit_log(message):
     # print("--------------------")
 
     if PROCESS_MODE == 'dev':
+        print(message)
         return "Dev Env"
 
     startname = time.strftime('%Y%m%d', time.localtime(time.time()))
@@ -167,6 +173,8 @@ def submit(ctx):
     # print("--------------------")
 
     if PROCESS_MODE == 'dev':
+        print("Submit Cotent")
+        print(ctx)
         return "Dev Env"
 
     assert (isinstance(ctx, list))
@@ -254,12 +262,46 @@ def data_process( data ):
     # adtk_cpu(data)
     # adtk_disk(data)
 
-    # adtk_common(data)
+    adtk_common(data)
 
     # MERGE From Wanglei
-    maxmin_node_mem(data)
+    # maxmin_node_mem(data)
     # MERGE From Wanglei End
 
+    # moyu_detect(data)
+
+# 使用自己编写的算法进行检测
+def moyu_detect(data):
+    obj_a = DetectObject()
+    md = MoyuDetector()
+
+    if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
+        t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+        apd = obj_a.getPd(data['cmdb_id'], data['kpi_name'])
+        apd["pd"] = apd["pd"].append( t_series )
+        apd["sample_count"] = apd["sample_count"] + 1
+
+        if apd['sample_count'] > apd['sample_time']:
+            apd["pd"].index = pd.to_datetime( apd["pd"].index )
+            apd["pd"] = validate_series( apd["pd"] )
+            print( data['cmdb_id'] + "-" + data['kpi_name'] + "," + str( len(apd["pd"]) ))
+
+            anomalies = md.stdMean( apd["pd"] )
+
+            if anomalies['value'].loc[anomalies.index[-1]] == True:
+                print("Anomaly Data Detected ==============")
+                apd["submit_count"] = apd["submit_count"] + 1
+                print(data)
+                print(data['cmdb_id'] + "-" + data['kpi_name'])
+                print(apd)
+        # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
+            # time.sleep(2)
+
+        # print(data['cmdb_id'] + "-" + data['kpi_name'])
+        # print(apd)
+        # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
+    else:
+        pass
 
 # MERGE From Wanglei
 # 使用峰谷阶跃方法计算node 内存消耗  故障
@@ -454,8 +496,8 @@ def SimpleDetect( df ):
         
 # 通用的异常检测方法，支持数据传入、指定 KPI 
 def adtk_common(data):
+    global SUBMIT_COUNT
     obj_a = DetectObject()
-
 
     if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
         t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
@@ -466,21 +508,20 @@ def adtk_common(data):
         if apd['sample_count'] > apd['sample_time']:
             apd["pd"].index = pd.to_datetime( apd["pd"].index )
             apd["pd"] = validate_series( apd["pd"] )
-            # threshold_ad = QuantileAD(high=0.98, low=0)
-            # threshold_ad = GeneralizedESDTestAD(alpha=0.3)
-            # threshold_ad = LevelShiftAD(c=5.0, side='positive', window=1)
-            # threshold_ad = VolatilityShiftAD(c=5.0, side='positive', window=5)
-            threshold_ad = CustomizedDetectorHD(detect_func=SimpleDetect)
-            print( data['cmdb_id'] + "-" + data['kpi_name'] + "," + str( len(apd["pd"]) ))
-            # anomalies = threshold_ad.fit_detect( apd["pd"] )
-            anomalies = threshold_ad.detect( apd["pd"] )
 
-            if anomalies['value'].loc[anomalies.index[-1]] == True:
-                print("Anomaly Data Detected ==============")
-                apd["submit_count"] = apd["submit_count"] + 1
-                print(data)
-                print(data['cmdb_id'] + "-" + data['kpi_name'])
-                print(apd)
+            if data['kpi_name'] == 'system.io.rkb_s':
+                if float(data['value']) > 100000:
+                    if apd["prev_timestamp"] == 0:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
+                        apd["prev_timestamp"] = data['timestamp']
         # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
             # time.sleep(2)
 
