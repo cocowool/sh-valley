@@ -35,10 +35,10 @@ class DetectObject( object, metaclass = MetaClass):
         "node-5",
         "node-6"]
     KPI_LIST = [ 
-        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障"},
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障"},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
-        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
+        # {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
+        # {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
         {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗"}
         # {"kpi_name":"system.io.avg_q_sz","sample_time":120},
         ]
@@ -157,7 +157,7 @@ def submit_log(message):
 
     if PROCESS_MODE == 'dev':
         print(message)
-        return "Dev Env"
+        return "Dev Submit_Log Test !"
 
     startname = time.strftime('%Y%m%d', time.localtime(time.time()))
     log_path = '/data/logs/'
@@ -180,7 +180,7 @@ def submit(ctx):
     if PROCESS_MODE == 'dev':
         print("Submit Cotent")
         print(ctx)
-        return "Dev Env"
+        return "Dev Submit Test !"
 
     assert (isinstance(ctx, list))
     assert (len(ctx) == 2)
@@ -516,7 +516,7 @@ def adtk_common(data):
 
             if data['kpi_name'] == 'system.io.rkb_s':
                 if float(data['value']) > 100000:
-                    if apd["prev_timestamp"] == 0:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -524,12 +524,10 @@ def adtk_common(data):
                         submit_log(log_message)
                         print(res)
                         SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
                         apd["prev_timestamp"] = data['timestamp']
             elif data['kpi_name'] == 'system.io.await':
                 if float(data['value']) > 45:
-                    if apd["prev_timestamp"] == 0:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -537,12 +535,10 @@ def adtk_common(data):
                         submit_log(log_message)
                         print(res)
                         SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
                         apd["prev_timestamp"] = data['timestamp']
             elif data['kpi_name'] == 'system.cpu.pct_usage':
                 if float(data['value']) > 60:
-                    if apd["prev_timestamp"] == 0:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -550,12 +546,13 @@ def adtk_common(data):
                         submit_log(log_message)
                         print(res)
                         SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
                         apd["prev_timestamp"] = data['timestamp']
             elif data['kpi_name'] == 'system.disk.pct_usage':
+                if data['cmdb_id'] == "node-6":
+                    return False
+
                 if float(data['value']) - apd['pd']["value"][-2] > 2:
-                    if apd["prev_timestamp"] == 0:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -564,7 +561,16 @@ def adtk_common(data):
                         print(res)
                         SUBMIT_COUNT += 1
                         apd["prev_timestamp"] = data['timestamp']
-                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
+                    
+                elif float(data['value']) - apd['pd']["value"][-3] > 2:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
                         apd["prev_timestamp"] = data['timestamp']
 
         # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
