@@ -255,10 +255,13 @@ def plt_metrics():
     # 0321 Test File
     test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
 
+    # 0321 容器读的指标
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
+
     df = pd.read_csv( test_file )
     
-    node_list = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5']
-    colors = ['red', 'blue', 'green', 'orange', 'black']
+    node_list = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5', 'node-6']
+    colors = ['red', 'blue', 'green', 'orange', 'black', 'purple']
     # CPU 故障
     # cloud_error = {1647754788:'node-4,node CPU FAIL', 1647755511: 'node-6,node CPU FAIL', 1647767561:'node-4,node CPU UP'}
 
@@ -279,6 +282,7 @@ def plt_metrics():
     for subplot in range(0, len(kpi_list)):
         if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
         # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
+        # if True:
             print(kpi_list[subplot])
 
             fig = plt.figure(figsize=(14,8))
@@ -289,7 +293,9 @@ def plt_metrics():
             j = 0
             # plt.figure()
             for i in node_list:
+                print(i)
                 cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
+                print(cdf)
                 plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
                 j += 1
 
