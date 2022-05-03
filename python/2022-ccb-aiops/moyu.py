@@ -250,7 +250,10 @@ def plt_metrics():
 
     faults_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0320.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0320.csv']
 
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    # 0320 Test File
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    # 0321 Test File
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
 
     df = pd.read_csv( test_file )
     
@@ -258,8 +261,13 @@ def plt_metrics():
     colors = ['red', 'blue', 'green', 'orange', 'black']
     # CPU 故障
     # cloud_error = {1647754788:'node-4,node CPU FAIL', 1647755511: 'node-6,node CPU FAIL', 1647767561:'node-4,node CPU UP'}
-    # 磁盘故障
-    cloud_error = {1647749271: 'node-1, disk read io error', 1647753199: 'node-2 disk write io error', 1647769222: 'node-5 disk write io error', 1647776146: 'node-4, disk read io error', 1647784337: 'node-1, disk space error', 1647788164: 'node-3, disk read io error'}
+
+    # 0320 磁盘故障
+    # cloud_error = {1647749271: 'node-1, disk read io error', 1647753199: 'node-2 disk write io error', 1647769222: 'node-5 disk write io error', 1647776146: 'node-4, disk read io error', 1647784337: 'node-1, disk space error', 1647788164: 'node-3, disk read io error'}
+
+    # 0321 磁盘故障
+    cloud_error = {1647830276: 'node-4, disk space error', 1647852107: 'node-5, disk space error', 1647865567: 'node-3, disk space error', 1647875729: 'node-4, disk space error'}
+
 
     # print(cloud_error[1647754788])
     # for i in cloud_error:
