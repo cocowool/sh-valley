@@ -14,6 +14,7 @@ from adtk.transformer import DoubleRollingAggregate
 from adtk.visualization import plot
 from adtk.detector import ThresholdAD
 import matplotlib.pyplot as plt
+import matplotlib as matplotlib
 
 
 # 提交答案服务域名或IP, 将在赛前告知
@@ -241,6 +242,19 @@ def adtk_test():
     # plot(adf)
     # pass
 
+def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
+    # 从颜色图（梯度多）中取N个
+    # test_cmaps = ['gist_rainbow', 'nipy_spectral', 'gist_ncar']
+    cmap = matplotlib.colors.ListedColormap(plt.get_cmap(cmaps_)(np.linspace(0, 1, N)))
+    if show_:
+        gradient = np.linspace(0, 1, 256)
+        gradient = np.vstack((gradient, gradient))
+        fig, ax = plt.subplots(1, 1, figsize=(5, 1))
+        ax.imshow(gradient, aspect='auto', cmap=cmap)
+        plt.show()
+    return cmap
+
+
 # 将 10 份 Metric 数据按照指标绘制到一张图上
 def plt_metrics():
     normal_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/'
@@ -253,15 +267,15 @@ def plt_metrics():
     # 0320 Test File
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
     # 0321 Test File
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
 
     # 0321 容器读的指标
-    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
 
     df = pd.read_csv( test_file )
     
     node_list = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5', 'node-6']
-    colors = ['red', 'blue', 'green', 'orange', 'black', 'purple']
+    colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
     # CPU 故障
     # cloud_error = {1647754788:'node-4,node CPU FAIL', 1647755511: 'node-6,node CPU FAIL', 1647767561:'node-4,node CPU UP'}
 
@@ -269,8 +283,10 @@ def plt_metrics():
     # cloud_error = {1647749271: 'node-1, disk read io error', 1647753199: 'node-2 disk write io error', 1647769222: 'node-5 disk write io error', 1647776146: 'node-4, disk read io error', 1647784337: 'node-1, disk space error', 1647788164: 'node-3, disk read io error'}
 
     # 0321 磁盘故障
-    cloud_error = {1647830276: 'node-4, disk space error', 1647852107: 'node-5, disk space error', 1647865567: 'node-3, disk space error', 1647875729: 'node-4, disk space error'}
+    # cloud_error = {1647830276: 'node-4, disk space error', 1647852107: 'node-5, disk space error', 1647865567: 'node-3, disk space error', 1647875729: 'node-4, disk space error'}
 
+    # 0321 容器 IO 故障
+    cloud_error = { 1647796830: 'productcatalogservice-2 , k8s read io error', 1647818816: 'adservice2-0 , k8s read io error', 1647850299: 'frontend-2 , k8s read io error'}
 
     # print(cloud_error[1647754788])
     # for i in cloud_error:
@@ -279,10 +295,12 @@ def plt_metrics():
     # print( df['value'].max() )
 
     kpi_list = df['kpi_name'].unique()
+    cmdb_list = df['cmdb_id'].unique()
+
     for subplot in range(0, len(kpi_list)):
-        if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
+        # if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
         # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
-        # if True:
+        if True:
             print(kpi_list[subplot])
 
             fig = plt.figure(figsize=(14,8))
@@ -292,7 +310,7 @@ def plt_metrics():
 
             j = 0
             # plt.figure()
-            for i in node_list:
+            for i in cmdb_list:
                 print(i)
                 cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
                 print(cdf)
@@ -325,6 +343,7 @@ if __name__ == '__main__':
 
     # 对比 Metric 并绘图
     plt_metrics()
+    # print(random_colormap(20))
 
     # load_heads()
     # print("Test")
