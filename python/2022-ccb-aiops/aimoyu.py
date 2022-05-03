@@ -39,8 +39,8 @@ class DetectObject( object, metaclass = MetaClass):
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
         {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
         {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
+        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗"}
         # {"kpi_name":"system.io.avg_q_sz","sample_time":120},
-        # {"kpi_name":"system.disk.pct_usage","sample_time":120}
         ]
     START_TIME = ''
     PD_LIST = {}
@@ -225,7 +225,8 @@ def kafka_consumer():
 # 消费本地文件的方式，通过读取文件内容来分析异常点
 def local_consumer():
     print('Local Consumer Mode !')
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
 
     f = open(test_file, 'r', encoding='utf-8')
     line = f.readline()
@@ -262,7 +263,10 @@ def local_consumer():
 # 处理数据，按条接收并处理数据，屏蔽 Kafka 和本地文件的差异
 # 记录开始处理的时间，记录处理的数据量
 def data_process( data ):
-    print(data)
+    if PROCESS_MODE == 'dev':
+        pass
+    else:
+        print(data)
     adtk_common(data)
 
     # MERGE From Wanglei
@@ -538,6 +542,19 @@ def adtk_common(data):
                         apd["prev_timestamp"] = data['timestamp']
             elif data['kpi_name'] == 'system.cpu.pct_usage':
                 if float(data['value']) > 60:
+                    if apd["prev_timestamp"] == 0:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+                    elif int(data['timestamp']) - int(apd["prev_timestamp"]) == 60:
+                        apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'system.disk.pct_usage':
+                if float(data['value']) - apd['pd']["value"][-2] > 2:
                     if apd["prev_timestamp"] == 0:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
