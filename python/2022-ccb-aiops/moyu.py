@@ -313,12 +313,13 @@ def plt_all_metrics():
         # print(len(sub_cmdb))
         # time.sleep(10)
 
-def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text ):
+def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text, tdf = None ):
     colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
 
     fig = plt.figure(figsize=(14,8))
     plt.rcParams["figure.autolayout"] = True
-    plt.rcParams['font.sans-serif'] = 'Monaco'
+    plt.rcParams['font.sans-serif'] = ['Songti SC']
+    plt.rcParams['axes.unicode_minus'] = False
 
     series_list = df[s_column].unique()
     print(series_list)
@@ -330,11 +331,17 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text 
         if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
             continue
 
-        print(cdf)
+        # print(cdf)
         plt.plot(cdf[x_column], cdf[y_column], c=colors[ j ], label=i)
         j = j + 1
         if j > 40:
             j = 1
+
+    # 将故障数据点标注处理啊
+    for index, row in tdf.iterrows():
+        plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
+        plt.text(row['timestamp'], cdf[y_column].max(), row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+
     plt.xlabel( label_x_text )
     plt.ylabel( label_y_text )
     plt.legend( loc='best' )
@@ -412,6 +419,14 @@ def plt_metrics():
     # 0321 容器 IO 故障
     cloud_error = { 1647796830: 'productcatalogservice-2 , k8s read io error', 1647818816: 'adservice2-0 , k8s read io error', 1647850299: 'frontend-2 , k8s read io error'}
 
+    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
+    tdf = pd.read_csv( truth_file )
+
+    # for index, row in tdf.iterrows():
+    #     print(index)
+    #     print(row["timestamp"])
+    # print(tdf)
+
     # print(cloud_error[1647754788])
     # for i in cloud_error:
     #     print(i)
@@ -424,7 +439,7 @@ def plt_metrics():
     # 需要忽略的 KPI
     ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
 
-    print(df)
+    # print(df)
     print('-------------------')
     for i in kpi_list:
         if i in ignore_kpi_lists:
@@ -432,7 +447,7 @@ def plt_metrics():
 
         xdf = df[ df['kpi_name'].str.contains(i) ]
 
-        plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'timestamp', i )
+        plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'timestamp', i , tdf)
         print('===========================')
 
 
