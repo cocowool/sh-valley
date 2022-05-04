@@ -257,7 +257,16 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
 
 
 def plt_all_metrics():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/jvm'
+
+    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
+    tdf = pd.read_csv( truth_file )
+    tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    tdf = tdf[ ~ tdf['level'].str.contains('pod')]
+
+    # 需要忽略的 KPI
+    ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
+
 
     df = pd.DataFrame()
     for parent, dir_lists, file_lists in os.walk(metric_folder):
@@ -277,41 +286,34 @@ def plt_all_metrics():
                     pass
                 elif 'kpi_' in file_name:
 
-                    df = df.append( pd.read_csv( file_name ) )
+                    df = pd.read_csv( file_name ) 
                     # print(df)
                     # time.sleep(1)
 
-    kpi_list = df['kpi_name'].unique()
-    cmdb_list = df['cmdb_id'].unique()
+                    kpi_list = df['kpi_name'].unique()
+                    cmdb_list = df['cmdb_id'].unique()
 
-    print(kpi_list)
-    print(len(kpi_list))
-    print(cmdb_list)
-    print(len(cmdb_list))
+                    print(kpi_list)
+                    print(len(kpi_list))
+                    print(cmdb_list)
+                    print(len(cmdb_list))
 
-    # 需要忽略的 KPI
-    ignore_kpi_lists = ['istio_agent_startup_duration_seconds', 'istio_tcp_sent_btes.UF,URX', 'istio_agent_scrapes', '']
+                    # 每个指标对应一张图，因此循环遍历 KPI_LIST
+                    for single_kpi in kpi_list:
+                        if single_kpi in ignore_kpi_lists:
+                            continue
 
-    # 每个指标对应一张图，因此循环遍历 KPI_LIST
-    for single_kpi in kpi_list:
-        if single_kpi in ignore_kpi_lists:
-            continue
+                        print(single_kpi)
+                        xdf = df[ df['kpi_name'].str.contains( single_kpi )]
+                        sub_cmdb = xdf['cmdb_id'].unique()
 
-        print(single_kpi)
-        xdf = df[ df['kpi_name'].str.contains( single_kpi )]
-        sub_cmdb = xdf['cmdb_id'].unique()
-
-        # 为便于观察，超过10条的线每次画 10 条
-        if len(sub_cmdb) > 1 and  len(sub_cmdb) > 10:
-            pass
-        elif len(sub_cmdb) > 1 and len(sub_cmdb) <= 10:
-            plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'Timestamp', single_kpi )
-        else:
-            pass
-
-        # print(sub_cmdb)
-        # print(len(sub_cmdb))
-        # time.sleep(10)
+                        # 为便于观察，超过10条的线每次画 10 条
+                        if len(sub_cmdb) > 1 and  len(sub_cmdb) > 10:
+                            pass
+                        elif len(sub_cmdb) > 1 and len(sub_cmdb) <= 10:
+                            plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'Timestamp', single_kpi, tdf )
+                        else:
+                            pass
 
 def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text, tdf = None ):
     colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
@@ -321,30 +323,38 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
     plt.rcParams['font.sans-serif'] = ['Songti SC']
     plt.rcParams['axes.unicode_minus'] = False
 
+    print(df)
+
     series_list = df[s_column].unique()
     print(series_list)
     j = 1
     for i in series_list:
         cdf = df[ df[s_column].str.contains(i) ]
+        print(cdf)
 
         # 把 0 值过滤掉
         if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
             continue
 
-        # print(cdf)
-        plt.plot(cdf[x_column], cdf[y_column], c=colors[ j ], label=i)
+        cdf = cdf.drop('cmdb_id', axis=1)
+        cdf = cdf.drop('kpi_name', axis=1)
+        # print(len(cdf[x_column]))
+        # print(len(cdf[y_column]))
+        # cdf['value'].plot()
+        plt.plot(cdf[x_column], cdf[y_column], c = colors[ j ], label=i)
+        print('Plot Line ----' + x_column + ',' + y_column )
         j = j + 1
         if j > 40:
             j = 1
 
-    # 将故障数据点标注处理啊
-    for index, row in tdf.iterrows():
-        plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
-        plt.text(row['timestamp'], cdf[y_column].max(), row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+    # # 将故障数据点标注处理啊
+    # for index, row in tdf.iterrows():
+    #     plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
+    #     plt.text(row['timestamp'], cdf[y_column].max(), row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
-    plt.xlabel( label_x_text )
+    plt.xlabel( 'X : ' + label_x_text )
     plt.ylabel( label_y_text )
-    plt.legend( loc='best' )
+    plt.legend( loc = 'best' )
     plt.show()
         # # if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
         # # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
@@ -401,7 +411,9 @@ def plt_metrics():
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
 
     # istio 请求指标
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/istio/kpi_istio_requests.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/istio/kpi_istio_requests.csv'
+
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/jvm/kpi_java_lang_OperatingSystem_SystemCpuLoad.csv'
 
     df = pd.read_csv( test_file )
     
@@ -421,10 +433,29 @@ def plt_metrics():
 
     truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
     tdf = pd.read_csv( truth_file )
+    tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    tdf = tdf[ ~ tdf['level'].str.contains('pod')]
 
-    # for index, row in tdf.iterrows():
-    #     print(index)
-    #     print(row["timestamp"])
+    prev_timestamp = 0
+    # print(df.head())
+    # time.sleep(100)
+    for index, row in df.iterrows():
+        # print(row)
+        if prev_timestamp == 0:
+            prev_timestamp = row['timestamp']
+            continue
+
+        if int(row['timestamp']) < prev_timestamp:
+            print("Timestamp Error")
+            print("index : " + str(index))
+            print("timestamp : "  + str(prev_timestamp))
+            time.sleep(100)
+        else:
+            prev_timestamp = index
+        
+        # print(row["timestamp"])
+
+    # time.sleep(100)
     # print(tdf)
 
     # print(cloud_error[1647754788])
@@ -439,6 +470,8 @@ def plt_metrics():
     # 需要忽略的 KPI
     ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
 
+
+    print(kpi_list)
     # print(df)
     print('-------------------')
     for i in kpi_list:
