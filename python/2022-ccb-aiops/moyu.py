@@ -2,7 +2,8 @@
 
 from dataclasses import field
 from distutils.log import error
-import json, datetime, requests, os
+import json, datetime, requests, os, time, random
+from posixpath import split
 from numpy import empty
 from kafka import KafkaConsumer
 from scipy.stats import kendalltau
@@ -255,7 +256,118 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
     return cmap
 
 
+def plt_all_metrics():
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric'
+
+    df = pd.DataFrame()
+    for parent, dir_lists, file_lists in os.walk(metric_folder):
+        for file_name in file_lists:
+            if file_name.endswith('csv'):
+                file_name = os.path.join(parent, file_name)
+                print(file_name)
+                # f = open(file_name, 'r', encoding='utf-8')
+                # line = f.readline()
+                # f.close()
+
+                if 'trace_jaeger' in file_name:
+                    pass
+                elif 'log_filebeat' in file_name:
+                    pass
+                elif 'metric_service' in file_name:
+                    pass
+                elif 'kpi_' in file_name:
+
+                    df = df.append( pd.read_csv( file_name ) )
+                    # print(df)
+                    # time.sleep(1)
+
+    kpi_list = df['kpi_name'].unique()
+    cmdb_list = df['cmdb_id'].unique()
+
+    print(kpi_list)
+    print(len(kpi_list))
+    print(cmdb_list)
+    print(len(cmdb_list))
+
+    # 需要忽略的 KPI
+    ignore_kpi_lists = ['istio_agent_startup_duration_seconds', 'istio_tcp_sent_btes.UF,URX', 'istio_agent_scrapes', '']
+
+    # 每个指标对应一张图，因此循环遍历 KPI_LIST
+    for single_kpi in kpi_list:
+        if single_kpi in ignore_kpi_lists:
+            continue
+
+        print(single_kpi)
+        xdf = df[ df['kpi_name'].str.contains( single_kpi )]
+        sub_cmdb = xdf['cmdb_id'].unique()
+
+        # 为便于观察，超过10条的线每次画 10 条
+        if len(sub_cmdb) > 1 and  len(sub_cmdb) > 10:
+            pass
+        elif len(sub_cmdb) > 1 and len(sub_cmdb) <= 10:
+            plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'Timestamp', single_kpi )
+        else:
+            pass
+
+        # print(sub_cmdb)
+        # print(len(sub_cmdb))
+        # time.sleep(10)
+
+def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text ):
+    colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
+
+    fig = plt.figure(figsize=(14,8))
+    plt.rcParams["figure.autolayout"] = True
+    plt.rcParams['font.sans-serif'] = 'Monaco'
+
+    series_list = df[s_column].unique()
+    j = 0
+    for i in series_list:
+        cdf = df[ df[s_column].str.contains(i) ]
+        plt.plot(cdf[x_column], cdf[y_column], c=colors[ j ], label=i)
+        j = j + 1
+    plt.xlabel( label_x_text )
+    plt.ylabel( label_y_text )
+    plt.legend( loc='best' )
+    plt.show()
+        # # if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
+        # # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
+        # for x in service_list:
+        # # if True:
+        #     print(kpi_list[subplot])
+
+        #     xdf = df[ df['cmdb_id'].str.contains(x) ]
+        #     fig = plt.figure(figsize=(14,8))
+        #     plt.rcParams['font.sans-serif'] = 'Monaco'
+        #     # ax = fig.add_subplot(len(kpi_list),1,subplot+1)
+        #     bdf = xdf[ xdf['kpi_name'].str.contains(kpi_list[subplot]) ]
+        #     # bdf = df[ df['cmdb_id'].str.contains(x) ]
+
+        #     j = 0
+        #     # plt.figure()
+        #     # for i in cmdb_list:
+        #     for i in cmdb_list:
+        #         if x in i:
+        #             print(i)
+        #             cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
+        #             print(cdf)
+        #             plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
+        #             j += 1
+
+        #     for i in cloud_error:
+        #         plt.plot(i, cdf['value'].max(), 'o')
+        #         plt.text(i,cdf['value'].max(),cloud_error[i],ha = 'center',va = 'bottom',fontsize=7,rotation=90)
+
+        #     plt.xlabel('Timestamp')
+        #     plt.ylabel(kpi_list[subplot])
+        #     plt.legend(loc='best')
+        #     plt.show()
+
 # 将 10 份 Metric 数据按照指标绘制到一张图上
+# 每种 Kpi 绘制一张图
+# 如果 cmdb_id 是 node 级别，所有 node 绘到一张图，不包含点
+# 如果 cmdb_id 是 Pod 级别，拆分 service ，根据 service 相同的绘制到一张图，包含点
+# 目录结构说明：
 def plt_metrics():
     normal_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/'
     faults_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/'
@@ -297,25 +409,35 @@ def plt_metrics():
     kpi_list = df['kpi_name'].unique()
     cmdb_list = df['cmdb_id'].unique()
 
+    service_list = set()
+
+    for i in cmdb_list:
+        service_list.add( i.split('.')[1] )
+
     for subplot in range(0, len(kpi_list)):
         # if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
         # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
-        if True:
+        for x in service_list:
+        # if True:
             print(kpi_list[subplot])
 
+            xdf = df[ df['cmdb_id'].str.contains(x) ]
             fig = plt.figure(figsize=(14,8))
             plt.rcParams['font.sans-serif'] = 'Monaco'
             # ax = fig.add_subplot(len(kpi_list),1,subplot+1)
-            bdf = df[ df['kpi_name'].str.contains(kpi_list[subplot]) ]
+            bdf = xdf[ xdf['kpi_name'].str.contains(kpi_list[subplot]) ]
+            # bdf = df[ df['cmdb_id'].str.contains(x) ]
 
             j = 0
             # plt.figure()
+            # for i in cmdb_list:
             for i in cmdb_list:
-                print(i)
-                cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
-                print(cdf)
-                plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
-                j += 1
+                if x in i:
+                    print(i)
+                    cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
+                    print(cdf)
+                    plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
+                    j += 1
 
             for i in cloud_error:
                 plt.plot(i, cdf['value'].max(), 'o')
@@ -342,7 +464,10 @@ if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    plt_metrics()
+    # plt_metrics()
+
+    plt_all_metrics()
+
     # print(random_colormap(20))
 
     # load_heads()
