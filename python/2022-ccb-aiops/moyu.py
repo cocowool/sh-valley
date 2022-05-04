@@ -321,11 +321,20 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text 
     plt.rcParams['font.sans-serif'] = 'Monaco'
 
     series_list = df[s_column].unique()
-    j = 0
+    print(series_list)
+    j = 1
     for i in series_list:
         cdf = df[ df[s_column].str.contains(i) ]
+
+        # 把 0 值过滤掉
+        if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
+            continue
+
+        print(cdf)
         plt.plot(cdf[x_column], cdf[y_column], c=colors[ j ], label=i)
         j = j + 1
+        if j > 40:
+            j = 1
     plt.xlabel( label_x_text )
     plt.ylabel( label_y_text )
     plt.legend( loc='best' )
@@ -382,7 +391,10 @@ def plt_metrics():
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
 
     # 0321 容器读的指标
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
+
+    # istio 请求指标
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/istio/kpi_istio_requests.csv'
 
     df = pd.read_csv( test_file )
     
@@ -409,64 +421,28 @@ def plt_metrics():
     kpi_list = df['kpi_name'].unique()
     cmdb_list = df['cmdb_id'].unique()
 
-    service_list = set()
+    # 需要忽略的 KPI
+    ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
 
-    for i in cmdb_list:
-        service_list.add( i.split('.')[1] )
+    print(df)
+    print('-------------------')
+    for i in kpi_list:
+        if i in ignore_kpi_lists:
+            continue
 
-    for subplot in range(0, len(kpi_list)):
-        # if 'disk' in kpi_list[subplot] or '.io.' in kpi_list[subplot]:
-        # if 'cpu' in kpi_list[subplot] or 'load' in kpi_list[subplot]:
-        for x in service_list:
-        # if True:
-            print(kpi_list[subplot])
+        xdf = df[ df['kpi_name'].str.contains(i) ]
 
-            xdf = df[ df['cmdb_id'].str.contains(x) ]
-            fig = plt.figure(figsize=(14,8))
-            plt.rcParams['font.sans-serif'] = 'Monaco'
-            # ax = fig.add_subplot(len(kpi_list),1,subplot+1)
-            bdf = xdf[ xdf['kpi_name'].str.contains(kpi_list[subplot]) ]
-            # bdf = df[ df['cmdb_id'].str.contains(x) ]
+        plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'timestamp', i )
+        print('===========================')
 
-            j = 0
-            # plt.figure()
-            # for i in cmdb_list:
-            for i in cmdb_list:
-                if x in i:
-                    print(i)
-                    cdf = bdf[ bdf['cmdb_id'].str.contains(i)]
-                    print(cdf)
-                    plt.plot(cdf['timestamp'], cdf['value'], c=colors[j], label=i)
-                    j += 1
-
-            for i in cloud_error:
-                plt.plot(i, cdf['value'].max(), 'o')
-                plt.text(i,cdf['value'].max(),cloud_error[i],ha = 'center',va = 'bottom',fontsize=7,rotation=90)
-
-            plt.xlabel('Timestamp')
-            plt.ylabel(kpi_list[subplot])
-            plt.legend(loc='best')
-            plt.show()
-
-    
-
-    # bdf.plot( figsize =(10,6), alpha = 0.5)
-    # plt.show()
-
-    # print( df['cmdb_id'].to_list() )
-    # bdf = pd.DataFrame(df['cmdb_id'].to_list(), columns = ['node-1', 'node-2', 'node-3', 'node-4', 'node-5'])
-
-
-    # pd.pivot_table( bdf, index=['timestamp'] )
-    # print(bdf)
 
 if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    # plt_metrics()
+    plt_metrics()
 
-    plt_all_metrics()
+    # plt_all_metrics()
 
     # print(random_colormap(20))
 
