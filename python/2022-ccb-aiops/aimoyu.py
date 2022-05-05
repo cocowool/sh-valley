@@ -34,13 +34,19 @@ class DetectObject( object, metaclass = MetaClass):
         "node-4",
         "node-5",
         "node-6"]
+
+    SERVICE_LIST = ['cartservice','productcatalogservice','recommendationservice','shippingservice','adservice','checkoutservice','frontend','currencyservice','emailservice','paymentservice']
+    
     KPI_LIST = [ 
-        # {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障"},
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障"},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        # {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
-        # {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
+        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
+        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
         {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗"}
-        # {"kpi_name":"system.io.avg_q_sz","sample_time":120},
+        # > 20
+        # {"kpi_name":"container_cpu_usage_seconds","sample_time":120},
+        # > 500
+        # {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type":"k8s容器cpu负载"},
         ]
     START_TIME = ''
     PD_LIST = {}
@@ -50,11 +56,15 @@ class DetectObject( object, metaclass = MetaClass):
             # self.PD_LIST.append
 
             kpi_dict = {}
+            # 将 Node 指标构建存储对象
             for j in self.KPI_LIST:
                 j["pd"] = pd.DataFrame
                 kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0, "prev_timestamp" : 0, "failure_type":j["failure_type"] }
 
             self.PD_LIST[i] = kpi_dict
+
+        for i in self.SERVICE_LIST:
+            pass
 
     def getPd(self, cmdb_id, kpi_name):
         if cmdb_id in self.PD_LIST and kpi_name in self.PD_LIST[cmdb_id]:
@@ -226,7 +236,8 @@ def kafka_consumer():
 def local_consumer():
     print('Local Consumer Mode !')
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_cpu_cfs_throttled_seconds.csv'
 
     f = open(test_file, 'r', encoding='utf-8')
     line = f.readline()
@@ -267,6 +278,7 @@ def data_process( data ):
         pass
     else:
         print(data)
+
     adtk_common(data)
 
     # MERGE From Wanglei
@@ -503,6 +515,7 @@ def SimpleDetect( df ):
 def adtk_common(data):
     global SUBMIT_COUNT
     obj_a = DetectObject()
+    # print(data)
 
     if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
         t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
@@ -515,6 +528,9 @@ def adtk_common(data):
             apd["pd"] = validate_series( apd["pd"] )
 
             if data['kpi_name'] == 'system.io.rkb_s':
+                if data['cmdb_id'] == "node-6":
+                    return False
+
                 if float(data['value']) > 100000:
                     if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
@@ -572,6 +588,19 @@ def adtk_common(data):
                         print(res)
                         SUBMIT_COUNT += 1
                         apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'container_cpu_cfs_throttled_seconds':
+                print(data)
+                if float(data['value']) > 500:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+
 
         # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
             # time.sleep(2)
