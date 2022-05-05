@@ -257,7 +257,7 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
 
 
 def plt_all_metrics():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/jvm'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container'
 
     truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
     tdf = pd.read_csv( truth_file )
@@ -307,13 +307,16 @@ def plt_all_metrics():
                         xdf = df[ df['kpi_name'].str.contains( single_kpi )]
                         sub_cmdb = xdf['cmdb_id'].unique()
 
+                        if xdf['value'].max() == 0 and xdf['value'].min() == 0 and xdf['value'].mean() == 0:
+                            continue
+
                         # 为便于观察，超过10条的线每次画 10 条
-                        if len(sub_cmdb) > 1 and  len(sub_cmdb) > 10:
-                            pass
-                        elif len(sub_cmdb) > 1 and len(sub_cmdb) <= 10:
-                            plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'Timestamp', single_kpi, tdf )
-                        else:
-                            pass
+                        plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'Timestamp', single_kpi, tdf )
+                        # if len(sub_cmdb) > 1 and  len(sub_cmdb) > 10:
+                        #     pass
+                        # elif len(sub_cmdb) > 1 and len(sub_cmdb) <= 10:
+                        # else:
+                        #     pass
 
 def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text, tdf = None ):
     colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
@@ -336,8 +339,8 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
         if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
             continue
 
-        cdf = cdf.drop('cmdb_id', axis=1)
-        cdf = cdf.drop('kpi_name', axis=1)
+        # cdf = cdf.drop('cmdb_id', axis=1)
+        # cdf = cdf.drop('kpi_name', axis=1)
         # print(len(cdf[x_column]))
         # print(len(cdf[y_column]))
         # cdf['value'].plot()
@@ -347,10 +350,10 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
         if j > 40:
             j = 1
 
-    # # 将故障数据点标注处理啊
-    # for index, row in tdf.iterrows():
-    #     plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
-    #     plt.text(row['timestamp'], cdf[y_column].max(), row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+    # 将故障数据点标注处理啊
+    for index, row in tdf.iterrows():
+        plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
+        plt.text(row['timestamp'], cdf[y_column].max(), row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
     plt.xlabel( 'X : ' + label_x_text )
     plt.ylabel( label_y_text )
@@ -488,9 +491,9 @@ if __name__ == '__main__':
     # print(timestampFormat(1647723540))
 
     # 对比 Metric 并绘图
-    plt_metrics()
+    # plt_metrics()
 
-    # plt_all_metrics()
+    plt_all_metrics()
 
     # print(random_colormap(20))
 
