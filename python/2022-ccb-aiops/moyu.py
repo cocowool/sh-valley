@@ -378,19 +378,21 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
                 continue
             plt.plot(cdf[x_column], cdf[y_column], c = colors[ j ], label=i)
 
-            # 将故障数据点标注处理啊
-            for index, row in tdf.iterrows():
-                plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
-                plt.text(row['timestamp'], cdf[y_column].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+            if j < 2:
+                # 将故障数据点标注处理啊
+                for index, row in tdf.iterrows():
+                    plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
+                    plt.text(row['timestamp'], cdf[y_column].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
         elif axis_option == 2:
             cdf = df
             plt.plot(cdf[x_column], cdf[i], c = colors[ j ], label=i)
 
-            # 将故障数据点标注处理啊
-            for index, row in tdf.iterrows():
-                plt.plot(row['timestamp'], cdf[i].max(), 'o')
-                plt.text(row['timestamp'], cdf[i].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+            if j < 2:
+                # 将故障数据点标注处理啊
+                for index, row in tdf.iterrows():
+                    plt.plot(row['timestamp'], cdf[i].max(), 'o')
+                    plt.text(row['timestamp'], cdf[i].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
 
         # print('Plot Line ----' + x_column + ',' + y_column )
