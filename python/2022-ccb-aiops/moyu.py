@@ -257,7 +257,7 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
 
 
 def plt_all_metrics():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/istio'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/service'
 
     truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
@@ -283,7 +283,34 @@ def plt_all_metrics():
                 elif 'log_filebeat' in file_name:
                     pass
                 elif 'metric_service' in file_name:
-                    pass
+                    df = pd.read_csv( file_name  )
+                    df = df.sort_values('timestamp') 
+                    # print(df)
+                    # time.sleep(1)
+
+                    service_list = df['service'].unique()
+                    # cmdb_list = df['cmdb_id'].unique()
+
+                    print(service_list)
+                    print(len(service_list))
+                    # print(cmdb_list)
+                    # print(len(cmdb_list))
+
+                    # 每个服务对应一张图，因此循环遍历
+                    for single_service in service_list:
+                        if single_service in ignore_kpi_lists:
+                            continue
+
+                        print(single_service)
+                        xdf = df[ df['service'].str.contains( single_service )]
+                        # sub_cmdb = xdf['cmdb_id'].unique()
+
+                        # if xdf['value'].max() == 0 and xdf['value'].min() == 0 and xdf['value'].mean() == 0:
+                        #     continue
+
+                        # 为便于观察，超过10条的线每次画 10 条
+                        plt_dataframe( xdf, 'timestamp', 'value', ['rr','sr','mrt','count'], 'Timestamp', single_service, tdf )
+
                 elif 'kpi_' in file_name:
 
                     df = pd.read_csv( file_name  )
@@ -329,32 +356,48 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
 
     # print(df)
 
-    series_list = df[s_column].unique()
+    # 1 表示根据列的多个值画线，2 表示按多列画线
+    axis_option = 1
+    # 根据多个列分别画线
+    if type(s_column) is list:
+        series_list = s_column
+        axis_option = 2
+    else:
+        # 根据一列中的多个值分别画线
+        series_list = df[s_column].unique()
+        axis_option = 1
+
     print(series_list)
     j = 1
     for i in series_list:
-        cdf = df[ df[s_column].str.contains(i) ]
-        # print(cdf)
+        if axis_option == 1:
+            cdf = df[ df[s_column].str.contains(i) ]
+            # print(cdf)
+            # 把 0 值过滤掉
+            if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
+                continue
+            plt.plot(cdf[x_column], cdf[y_column], c = colors[ j ], label=i)
 
-        # 把 0 值过滤掉
-        if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
-            continue
+            # 将故障数据点标注处理啊
+            for index, row in tdf.iterrows():
+                plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
+                plt.text(row['timestamp'], cdf[y_column].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
-        # cdf = cdf.drop('cmdb_id', axis=1)
-        # cdf = cdf.drop('kpi_name', axis=1)
-        # print(len(cdf[x_column]))
-        # print(len(cdf[y_column]))
-        # cdf['value'].plot()
-        plt.plot(cdf[x_column], cdf[y_column], c = colors[ j ], label=i)
+        elif axis_option == 2:
+            cdf = df
+            plt.plot(cdf[x_column], cdf[i], c = colors[ j ], label=i)
+
+            # 将故障数据点标注处理啊
+            for index, row in tdf.iterrows():
+                plt.plot(row['timestamp'], cdf[i].max(), 'o')
+                plt.text(row['timestamp'], cdf[i].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+
+
         # print('Plot Line ----' + x_column + ',' + y_column )
         j = j + 1
         if j > 40:
             j = 1
 
-    # 将故障数据点标注处理啊
-    for index, row in tdf.iterrows():
-        plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
-        plt.text(row['timestamp'], cdf[y_column].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
     plt.xlabel( 'X : ' + label_x_text )
     plt.ylabel( label_y_text )
