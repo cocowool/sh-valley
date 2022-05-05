@@ -49,7 +49,15 @@ class DetectObject( object, metaclass = MetaClass):
         # > 20
         # {"kpi_name":"container_cpu_usage_seconds","sample_time":120},
         # > 500
-        {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type":"k8s容器cpu负载"}
+        {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
+        # >= 0.8
+        {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
+        # > 3000
+        {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
+        # > 5000
+        {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        # > 95
+        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"}
     ]
     START_TIME = ''
     PD_LIST = {}
@@ -245,7 +253,14 @@ def local_consumer():
     print('Local Consumer Mode !')
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_cpu_cfs_throttled_seconds.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_cpu_cfs_throttled_seconds.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_network_receive_packets_dropped.csv'
+
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_fs_writes_MB.csv'
+
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
+
+    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_memory_failures.csv'
 
     f = open(test_file, 'r', encoding='utf-8')
     line = f.readline()
@@ -446,6 +461,91 @@ def adtk_common(data):
                             SUBMIT_COUNT += 1
 
                             apd["prev_timestamp"] = data['timestamp']
+                elif data['kpi_name'] == 'container_network_receive_packets_dropped.eth0':
+                    # print(data)
+                    if float(data['value']) > 0.8:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                            res = submit([cmdb_name, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            res = submit([cmdb_key, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_key + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            apd["prev_timestamp"] = data['timestamp']
+                elif data['kpi_name'] == 'container_fs_writes_MB./dev/vda':
+                    # print(data)
+                    if float(data['value']) > 3000:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                            res = submit([cmdb_name, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            res = submit([cmdb_key, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_key + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            apd["prev_timestamp"] = data['timestamp']
+                elif data['kpi_name'] == 'container_fs_reads./dev/vda':
+                    # print(data)
+                    if float(data['value']) > 3000:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                            res = submit([cmdb_name, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            res = submit([cmdb_key, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_key + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            apd["prev_timestamp"] = data['timestamp']
+                elif data['kpi_name'] == 'container_memory_failures.container.pgmajfault':
+                    if float(data['value']) > 200:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                            res = submit([cmdb_name, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            res = submit([cmdb_key, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_key + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            apd["prev_timestamp"] = data['timestamp']
+
+
             
 
         # print( data )
