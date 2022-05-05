@@ -257,9 +257,9 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
 
 
 def plt_all_metrics():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/istio'
 
-    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
+    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
     tdf = tdf[ ~ tdf['level'].str.contains('node')]
     tdf = tdf[ ~ tdf['level'].str.contains('pod')]
@@ -286,7 +286,8 @@ def plt_all_metrics():
                     pass
                 elif 'kpi_' in file_name:
 
-                    df = pd.read_csv( file_name ) 
+                    df = pd.read_csv( file_name  )
+                    df = df.sort_values('timestamp') 
                     # print(df)
                     # time.sleep(1)
 
@@ -326,14 +327,14 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
     plt.rcParams['font.sans-serif'] = ['Songti SC']
     plt.rcParams['axes.unicode_minus'] = False
 
-    print(df)
+    # print(df)
 
     series_list = df[s_column].unique()
     print(series_list)
     j = 1
     for i in series_list:
         cdf = df[ df[s_column].str.contains(i) ]
-        print(cdf)
+        # print(cdf)
 
         # 把 0 值过滤掉
         if cdf['value'].max() == 0 and cdf['value'].min() == 0 and cdf['value'].mean() == 0:
@@ -345,7 +346,7 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
         # print(len(cdf[y_column]))
         # cdf['value'].plot()
         plt.plot(cdf[x_column], cdf[y_column], c = colors[ j ], label=i)
-        print('Plot Line ----' + x_column + ',' + y_column )
+        # print('Plot Line ----' + x_column + ',' + y_column )
         j = j + 1
         if j > 40:
             j = 1
@@ -353,7 +354,7 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
     # 将故障数据点标注处理啊
     for index, row in tdf.iterrows():
         plt.plot(row['timestamp'], cdf[y_column].max(), 'o')
-        plt.text(row['timestamp'], cdf[y_column].max(), row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
+        plt.text(row['timestamp'], cdf[y_column].max(), row['level'] + ',' + row["cmdb_id"] + ',' + row["failure_type"] , ha = 'center', va = 'bottom', fontsize = 8, rotation = 90)
 
     plt.xlabel( 'X : ' + label_x_text )
     plt.ylabel( label_y_text )
