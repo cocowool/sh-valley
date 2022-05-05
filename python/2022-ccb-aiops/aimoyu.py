@@ -1,5 +1,5 @@
 from kafka import KafkaConsumer
-import time, json, requests, os, random, sys, getopt, datetime
+import time, json, requests, os, random, sys, getopt, datetime, re
 import pandas as pd
 from pandas import DataFrame, DatetimeIndex
 from adtk.data import validate_series
@@ -43,11 +43,14 @@ class DetectObject( object, metaclass = MetaClass):
         {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
         {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
         {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗"}
+        ]
+
+    SERVICE_KPI_LIST = [
         # > 20
         # {"kpi_name":"container_cpu_usage_seconds","sample_time":120},
         # > 500
-        # {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type":"k8s容器cpu负载"},
-        ]
+        {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type":"k8s容器cpu负载"}
+    ]
     START_TIME = ''
     PD_LIST = {}
     
@@ -64,7 +67,12 @@ class DetectObject( object, metaclass = MetaClass):
             self.PD_LIST[i] = kpi_dict
 
         for i in self.SERVICE_LIST:
-            pass
+            kpi_dict = {}
+            for j in self.SERVICE_KPI_LIST:
+                j["pd"] = pd.DataFrame
+                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0, "prev_timestamp" : 0, "failure_type":j["failure_type"] }
+
+            self.PD_LIST[i] = kpi_dict
 
     def getPd(self, cmdb_id, kpi_name):
         if cmdb_id in self.PD_LIST and kpi_name in self.PD_LIST[cmdb_id]:
@@ -320,6 +328,129 @@ def moyu_detect(data):
     else:
         pass
 
+# 通用的异常检测方法，支持数据传入、指定 KPI 
+def adtk_common(data):
+    global SUBMIT_COUNT
+    obj_a = DetectObject()
+    # print(data)
+
+    # 判断 Node 类型的故障
+    if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
+        t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+        apd = obj_a.getPd(data['cmdb_id'], data['kpi_name'])
+        apd["pd"] = apd["pd"].append( t_series )
+        apd["sample_count"] = apd["sample_count"] + 1
+
+        if apd['sample_count'] > apd['sample_time']:
+            apd["pd"].index = pd.to_datetime( apd["pd"].index )
+            apd["pd"] = validate_series( apd["pd"] )
+
+            if data['kpi_name'] == 'system.io.rkb_s':
+                if data['cmdb_id'] == "node-6":
+                    return False
+
+                if float(data['value']) > 100000:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'system.io.await':
+                if float(data['value']) > 45:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'system.cpu.pct_usage':
+                if float(data['value']) > 60:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+            elif data['kpi_name'] == 'system.disk.pct_usage':
+                if data['cmdb_id'] == "node-6":
+                    return False
+
+                if float(data['value']) - apd['pd']["value"][-2] > 2:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+                    
+                elif float(data['value']) - apd['pd']["value"][-3] > 2:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        res = submit([data['cmdb_id'], apd["failure_type"] ])
+                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                        log_message += 'Metric : ' + json.dumps(data) + '\n'
+                        submit_log(log_message)
+                        print(res)
+                        SUBMIT_COUNT += 1
+                        apd["prev_timestamp"] = data['timestamp']
+    
+        # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
+            # time.sleep(2)
+
+        # print(data['cmdb_id'] + "-" + data['kpi_name'])
+        # print(apd)
+        # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
+    else:
+        # 判断 Service 或 Pod 类型的故障
+        if "node" in data['cmdb_id']:
+            cmdb_name = data['cmdb_id'].split('.')[1]
+            cmdb_key = re.sub("[^A-Za-z]", "", cmdb_name)
+
+            if obj_a.getPd(cmdb_key, data['kpi_name']):
+                t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
+                apd = obj_a.getPd(cmdb_key, data['kpi_name'])
+                apd["pd"] = apd["pd"].append( t_series )
+                apd["sample_count"] = apd["sample_count"] + 1
+
+                if data['kpi_name'] == 'container_cpu_cfs_throttled_seconds':
+                    # print(data)
+                    if float(data['value']) > 500:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                            res = submit([cmdb_name, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            res = submit([cmdb_key, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_key + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            apd["prev_timestamp"] = data['timestamp']
+            
+
+        # print( data )
+        # print( "No preset algorithm, continue !")
+
 # MERGE From Wanglei
 # 使用峰谷阶跃方法计算node 内存消耗  故障
 def maxmin_node_mem(data):
@@ -510,108 +641,6 @@ def maxmin_node_mem(data):
 # 自己编写的异常检测程序
 def SimpleDetect( df ):
     return (df['value'] > 20 )
-        
-# 通用的异常检测方法，支持数据传入、指定 KPI 
-def adtk_common(data):
-    global SUBMIT_COUNT
-    obj_a = DetectObject()
-    # print(data)
-
-    if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
-        t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
-        apd = obj_a.getPd(data['cmdb_id'], data['kpi_name'])
-        apd["pd"] = apd["pd"].append( t_series )
-        apd["sample_count"] = apd["sample_count"] + 1
-
-        if apd['sample_count'] > apd['sample_time']:
-            apd["pd"].index = pd.to_datetime( apd["pd"].index )
-            apd["pd"] = validate_series( apd["pd"] )
-
-            if data['kpi_name'] == 'system.io.rkb_s':
-                if data['cmdb_id'] == "node-6":
-                    return False
-
-                if float(data['value']) > 100000:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-            elif data['kpi_name'] == 'system.io.await':
-                if float(data['value']) > 45:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-            elif data['kpi_name'] == 'system.cpu.pct_usage':
-                if float(data['value']) > 60:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-            elif data['kpi_name'] == 'system.disk.pct_usage':
-                if data['cmdb_id'] == "node-6":
-                    return False
-
-                if float(data['value']) - apd['pd']["value"][-2] > 2:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-                    
-                elif float(data['value']) - apd['pd']["value"][-3] > 2:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-            elif data['kpi_name'] == 'container_cpu_cfs_throttled_seconds':
-                print(data)
-                if float(data['value']) > 500:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
-
-
-        # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
-            # time.sleep(2)
-
-        # print(data['cmdb_id'] + "-" + data['kpi_name'])
-        # print(apd)
-        # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
-    else:
-        pass
-        # print( data )
-        # print( "No preset algorithm, continue !")
 
 # 分析CPU故障场景
 def cpu_pct(data, i):
