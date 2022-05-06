@@ -38,11 +38,11 @@ class DetectObject( object, metaclass = MetaClass):
     SERVICE_LIST = ['cartservice','productcatalogservice','recommendationservice','shippingservice','adservice','checkoutservice','frontend','currencyservice','emailservice','paymentservice']
     
     KPI_LIST = [ 
-        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障"},
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "method" : '', "parameter" : ''},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗"},
-        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗"},
-        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗"}
+        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "method" : '', "parameter" : ''},
+        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "method" : '', "parameter" : ''},
+        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "method" : '', "parameter" : ''}
         ]
 
     SERVICE_KPI_LIST = [
@@ -57,7 +57,10 @@ class DetectObject( object, metaclass = MetaClass):
         # > 5000
         {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
         # > 95
-        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"}
+        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
+        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+
     ]
     START_TIME = ''
     PD_LIST = {}
@@ -251,9 +254,9 @@ def kafka_consumer():
 # 消费本地文件的方式，通过读取文件内容来分析异常点
 def local_consumer():
     print('Local Consumer Mode !')
-    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
-    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
-    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/container/kpi_container_cpu_cfs_throttled_seconds.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_cpu_cfs_throttled_seconds.csv'
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_network_receive_packets_dropped.csv'
 
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_fs_writes_MB.csv'
@@ -430,7 +433,7 @@ def adtk_common(data):
         # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
     else:
         # 判断 Service 或 Pod 类型的故障
-        if "node" in data['cmdb_id']:
+        if "node." in data['cmdb_id']:
             cmdb_name = data['cmdb_id'].split('.')[1]
             cmdb_key = re.sub("[^A-Za-z]", "", cmdb_name)
 
