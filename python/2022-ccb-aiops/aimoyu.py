@@ -38,11 +38,12 @@ class DetectObject( object, metaclass = MetaClass):
     SERVICE_LIST = ['cartservice','productcatalogservice','recommendationservice','shippingservice','adservice','checkoutservice','frontend','currencyservice','emailservice','paymentservice']
     
     KPI_LIST = [ 
-        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "method" : '', "parameter" : ''},
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "function_name" : 'threshold_detect', "parameter" : 60},
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":120, "failure_type":"node节点CPU故障", "function_name" : 'maxmin_detect', "parameter" : 60},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "method" : '', "parameter" : ''},
-        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "method" : '', "parameter" : ''},
-        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "method" : '', "parameter" : ''}
+        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'threshold_detect', "parameter" : ''},
+        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "function_name" : 'threshold_detect', "parameter" : ''},
+        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "function_name" : 'threshold_detect', "parameter" : ''}
         ]
 
     SERVICE_KPI_LIST = [
@@ -50,16 +51,16 @@ class DetectObject( object, metaclass = MetaClass):
         # {"kpi_name":"container_cpu_usage_seconds","sample_time":120},
         # > 500
         {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
-        # >= 0.8
-        {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
-        # > 3000
-        {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
-        # > 5000
-        {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
-        # > 95
-        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
-        # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
-        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        # # >= 0.8
+        # {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
+        # # > 3000
+        # {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
+        # # > 5000
+        # {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        # # > 95
+        # {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
+        # {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
 
     ]
     START_TIME = ''
@@ -73,7 +74,7 @@ class DetectObject( object, metaclass = MetaClass):
             # 将 Node 指标构建存储对象
             for j in self.KPI_LIST:
                 j["pd"] = pd.DataFrame
-                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0, "prev_timestamp" : 0, "failure_type":j["failure_type"] }
+                kpi_dict[j["kpi_name"]] = {"pd": pd.DataFrame(), "sample_time": j["sample_time"], "sample_count": 0, "submit_count": 0, "prev_timestamp" : 0, "failure_type":j["failure_type"], "function_name" : j["function_name"], "parameter" : j["parameter"] }
 
             self.PD_LIST[i] = kpi_dict
 
@@ -251,10 +252,32 @@ def kafka_consumer():
         #         cpu_pct(data, i)
         #         i = i + 1
 
+# 以文佳件方式消费数据
+def local_folder_consumer():
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220320/cloudbed-1/metric/container'
+
+    for parent, dir_lists, file_lists in os.walk(metric_folder):
+        for file_name in file_lists:
+            if file_name.endswith('csv'):
+                file_name = os.path.join(parent, file_name)
+                print(file_name)
+                # f = open(file_name, 'r', encoding='utf-8')
+                # line = f.readline()
+                # f.close()
+
+                if 'trace_jaeger' in file_name:
+                    pass
+                elif 'log_filebeat' in file_name:
+                    pass
+                elif 'metric_service' in file_name:
+                    pass
+                elif 'kpi_' in file_name:
+                    local_consumer(file_name)
+
 # 消费本地文件的方式，通过读取文件内容来分析异常点
-def local_consumer():
+def local_consumer(test_file):
     print('Local Consumer Mode !')
-    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220320/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/node/kpi_cloudbed1_metric_0321.csv'
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_cpu_cfs_throttled_seconds.csv'
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_network_receive_packets_dropped.csv'
@@ -263,7 +286,7 @@ def local_consumer():
 
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_fs_reads.csv'
 
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_memory_failures.csv'
+    # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container/kpi_container_memory_failures.csv'
 
     f = open(test_file, 'r', encoding='utf-8')
     line = f.readline()
@@ -313,38 +336,70 @@ def data_process( data ):
 
     # moyu_detect(data)
 
-# 使用自己编写的算法进行检测
-def moyu_detect(data):
-    obj_a = DetectObject()
-    md = MoyuDetector()
+# 固定阈值检测算法
+# apd , DetectObject 中初始化的 PD_LIST 对象
+# data , 需要处理的数据
+def threshold_detect(apd, data):
+    global SUBMIT_COUNT
 
-    if obj_a.getPd(data['cmdb_id'], data['kpi_name']):
-        t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
-        apd = obj_a.getPd(data['cmdb_id'], data['kpi_name'])
-        apd["pd"] = apd["pd"].append( t_series )
-        apd["sample_count"] = apd["sample_count"] + 1
+    if float(data['value']) > apd["parameter"]:
+        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+            res = submit([data['cmdb_id'], apd["failure_type"] ])
+            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+            log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+            log_message += 'Metric : ' + json.dumps(data) + '\n'
+            submit_log(log_message)
+            print(res)
+            SUBMIT_COUNT += 1
+            apd["prev_timestamp"] = data['timestamp']
 
-        if apd['sample_count'] > apd['sample_time']:
-            apd["pd"].index = pd.to_datetime( apd["pd"].index )
-            apd["pd"] = validate_series( apd["pd"] )
-            print( data['cmdb_id'] + "-" + data['kpi_name'] + "," + str( len(apd["pd"]) ))
+# 改写 maxmin_node_mem 函数
+def maxmin_detect(apd, data):
+    global SUBMIT_COUNT
+    apd["current_max_minus_min"] = apd["pd"]["value"].max() - apd["pd"]["value"].min()
 
-            anomalies = md.stdMean( apd["pd"] )
+    if data['cmdb_id'] == "node-4":
 
-            if anomalies['value'].loc[anomalies.index[-1]] == True:
-                print("Anomaly Data Detected ==============")
-                apd["submit_count"] = apd["submit_count"] + 1
-                print(data)
-                print(data['cmdb_id'] + "-" + data['kpi_name'])
-                print(apd)
-        # obj_a.setPd(data['cmdb_id'], data['kpi_name'], apd)
-            # time.sleep(2)
+        if 'last_max_minus_min' not in apd:
+            apd["last_max_minus_min"] = apd["current_max_minus_min"]
 
-        # print(data['cmdb_id'] + "-" + data['kpi_name'])
-        # print(apd)
-        # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
-    else:
-        pass
+        print("current:" +  str(apd["current_max_minus_min"]))
+        print("last:" +  str(apd["last_max_minus_min"]))
+        print("current/last:" +  str(apd["current_max_minus_min"] / apd["last_max_minus_min"]))
+
+        if ( apd["current_max_minus_min"] / apd["last_max_minus_min"]) > 1.7:
+            res = submit([data['cmdb_id'], apd["failure_type"] ])
+            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+            log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+            log_message += 'Metric : ' + json.dumps(data) + '\n'
+            submit_log(log_message)
+            print(res)
+            SUBMIT_COUNT += 1
+            apd["prev_timestamp"] = data['timestamp']
+
+    # pass
+
+            # NODE1_MEM_PCT_USAGE.append(float(data['value']))
+            # NODE1_MEM_PROCESS_CNT+=1
+            # if NODE1_MEM_PROCESS_CNT>window_size:
+            #     NODE1_MEM_PCT_USAGE.reverse()
+            #     NODE1_MEM_PCT_USAGE.pop()
+            #     NODE1_MEM_PCT_USAGE.reverse()
+              
+            #     NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
+            #     NODE1_CURRENT_MAX_MINUS_MIN=max(NODE1_MEM_PCT_USAGE)-min(NODE1_MEM_PCT_USAGE)
+            #     if(NODE1_LAST_MAX_MINUS_MIN)==0:
+            #         NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
+
+            #     f.write('NODE1-MAX/MIN'+','+str(NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN)+'\n')
+                
+            #     if NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN>1.7:
+            #         res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
+            #         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+            #         log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
+            #         log_message += 'Metric : ' + json.dumps(data) + '\n'
+            #         submit_log(log_message)
+            #         SUBMIT_COUNT += 1
 
 # 通用的异常检测方法，支持数据传入、指定 KPI 
 def adtk_common(data):
@@ -389,16 +444,7 @@ def adtk_common(data):
                         SUBMIT_COUNT += 1
                         apd["prev_timestamp"] = data['timestamp']
             elif data['kpi_name'] == 'system.cpu.pct_usage':
-                if float(data['value']) > 60:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
+                eval(apd["function_name"])(apd, data)
             elif data['kpi_name'] == 'system.disk.pct_usage':
                 if data['cmdb_id'] == "node-6":
                     return False
@@ -433,9 +479,12 @@ def adtk_common(data):
         # print( obj_a.getPd(data['cmdb_id'], data['kpi_name']) )
     else:
         # 判断 Service 或 Pod 类型的故障
-        if "node." in data['cmdb_id']:
+        pattern = re.compile("node-\d.")
+        ret = pattern.findall(data['cmdb_id'])
+        if ret:
             cmdb_name = data['cmdb_id'].split('.')[1]
             cmdb_key = re.sub("[^A-Za-z]", "", cmdb_name)
+            # print(data)
 
             if obj_a.getPd(cmdb_key, data['kpi_name']):
                 t_series = pd.Series({"value" : float(data['value'])}, name=timestampFormat(int(data['timestamp'])) )
@@ -824,7 +873,7 @@ if __name__ == '__main__':
     # opd["pd"] = opd["pd"].append( pd.Series( {"value" : 99}, name="11") )
 
     if PROCESS_MODE == 'dev':
-        local_consumer()
+        local_folder_consumer()
     else:
         kafka_consumer()
 
