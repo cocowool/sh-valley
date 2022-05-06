@@ -338,12 +338,16 @@ def metric_stat():
                                     if single_cmdb + ':' + single_kpi not in nonzero_union_list:
                                         nonzero_union_list.append( single_cmdb + ':' + single_kpi )
 
-                                    print( single_cmdb + ':' + single_kpi + ': max = ' + str(zdf['value'].max() ) + ', row index = ' + str(zdf['value'].idxmax() ) + ', timestamp = ' + str(zdf.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) )
-                                    max_value_kpi_list[single_cmdb + ':' + single_kpi] = { 'cmdb_id' : single_cmdb, 'kpi_name' : single_kpi, 'max_value' : zdf['value'].max() }
+                                    for index, row in tdf.iterrows():
+                                        if abs(row['timestamp'] - df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) < 10:
+                                            print( single_cmdb + ':' + single_kpi + ': max = ' + str(zdf['value'].max() ) + ', row index = ' + str(zdf['value'].idxmax() ) + ', timestamp = ' + str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) )
+                                            print(row)
+                                            max_value_kpi_list[single_cmdb + ':' + single_kpi] = { 'cmdb_id' : single_cmdb, 'kpi_name' : single_kpi, 'max_value' : zdf['value'].max(), 'error_timestamp' : str(row['timestamp']), 'level' : row['level'],  'error_cmdb_id' : row['cmdb_id'], 'failure_type' : row['failure_type'] }
 
     print('len(equal_kpi_list) = ' + str(len(equal_kpi_list)))
     print('len(nonzero_kpi_list) = ' +  str(len(nonzero_kpi_list)))
     print('len(nonzero_union_list) = ' +  str(len(nonzero_union_list)))
+    print(max_value_kpi_list)
 
 # 支持按照文件夹对文件夹内的文件进行画线
 def plt_all_metrics():
