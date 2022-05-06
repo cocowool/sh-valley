@@ -342,7 +342,7 @@ def metric_stat():
                                         if abs(row['timestamp'] - df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) < 10:
                                             print( single_cmdb + ':' + single_kpi + ': max = ' + str(zdf['value'].max() ) + ', row index = ' + str(zdf['value'].idxmax() ) + ', timestamp = ' + str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) )
                                             print(row)
-                                            max_value_kpi_list[single_cmdb + ':' + single_kpi] = { 'cmdb_id' : single_cmdb, 'kpi_name' : single_kpi, 'max_value' : zdf['value'].max(), 'error_timestamp' : str(row['timestamp']), 'level' : row['level'],  'error_cmdb_id' : row['cmdb_id'], 'failure_type' : row['failure_type'] }
+                                            max_value_kpi_list[single_cmdb + ':' + single_kpi] = { 'cmdb_id' : single_cmdb, 'kpi_name' : single_kpi, 'max_value' : zdf['value'].max(), 'timestamp' : str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) ,'error_timestamp' : str(row['timestamp']), 'level' : row['level'],  'error_cmdb_id' : row['cmdb_id'], 'failure_type' : row['failure_type'] }
 
     print('len(equal_kpi_list) = ' + str(len(equal_kpi_list)))
     print('len(nonzero_kpi_list) = ' +  str(len(nonzero_kpi_list)))
