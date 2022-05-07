@@ -52,15 +52,15 @@ class DetectObject( object, metaclass = MetaClass):
         # > 500
         {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
         # # >= 0.8
-        # {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
+        {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
         # # > 3000
-        # {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
+        {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
         # # > 5000
-        # {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
         # # > 95
-        # {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
         # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
-        # {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
 
     ]
     START_TIME = ''
@@ -254,7 +254,7 @@ def kafka_consumer():
 
 # 以文佳件方式消费数据
 def local_folder_consumer():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220320/cloudbed-1/metric/container'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container'
 
     for parent, dir_lists, file_lists in os.walk(metric_folder):
         for file_name in file_lists:
@@ -343,7 +343,7 @@ def threshold_detect(apd, data):
     global SUBMIT_COUNT
 
     if float(data['value']) > apd["parameter"]:
-        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
             res = submit([data['cmdb_id'], apd["failure_type"] ])
             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
             log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -423,7 +423,7 @@ def adtk_common(data):
                     return False
 
                 if float(data['value']) > 100000:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -434,7 +434,7 @@ def adtk_common(data):
                         apd["prev_timestamp"] = data['timestamp']
             elif data['kpi_name'] == 'system.io.await':
                 if float(data['value']) > 45:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -450,7 +450,7 @@ def adtk_common(data):
                     return False
 
                 if float(data['value']) - apd['pd']["value"][-2] > 2:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -461,7 +461,7 @@ def adtk_common(data):
                         apd["prev_timestamp"] = data['timestamp']
                     
                 elif float(data['value']) - apd['pd']["value"][-3] > 2:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -493,9 +493,10 @@ def adtk_common(data):
                 apd["sample_count"] = apd["sample_count"] + 1
 
                 if data['kpi_name'] == 'container_cpu_cfs_throttled_seconds':
+
                     # print(data)
                     if float(data['value']) > 500:
-                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                             log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -516,7 +517,7 @@ def adtk_common(data):
                 elif data['kpi_name'] == 'container_network_receive_packets_dropped.eth0':
                     # print(data)
                     if float(data['value']) > 0.8:
-                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                             log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -537,7 +538,7 @@ def adtk_common(data):
                 elif data['kpi_name'] == 'container_fs_writes_MB./dev/vda':
                     # print(data)
                     if float(data['value']) > 3000:
-                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                             log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -556,9 +557,12 @@ def adtk_common(data):
 
                             apd["prev_timestamp"] = data['timestamp']
                 elif data['kpi_name'] == 'container_fs_reads./dev/vda':
+                    if "payment" in data['cmdb_id']:
+                        return False
+
                     # print(data)
                     if float(data['value']) > 3000:
-                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                             log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -578,7 +582,7 @@ def adtk_common(data):
                             apd["prev_timestamp"] = data['timestamp']
                 elif data['kpi_name'] == 'container_memory_failures.container.pgmajfault':
                     if float(data['value']) > 200:
-                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 300:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                             log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
