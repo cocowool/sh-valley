@@ -60,7 +60,9 @@ class DetectObject( object, metaclass = MetaClass):
         # # > 95
         {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
         # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
-        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器网络延迟"},
+        # # > 增量大于8
+        {"kpi_name" : "container_file_descriptors", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
 
     ]
     START_TIME = ''
@@ -582,6 +584,26 @@ def adtk_common(data):
                             apd["prev_timestamp"] = data['timestamp']
                 elif data['kpi_name'] == 'container_memory_failures.container.pgmajfault':
                     if float(data['value']) > 200:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
+                            res = submit([cmdb_name, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            res = submit([cmdb_key, apd["failure_type"] ])
+                            log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+                            log_message += 'Content: [' + cmdb_key + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+                            log_message += 'Metric : ' + json.dumps(data) + '\n'
+                            submit_log(log_message)
+                            print(res)
+                            SUBMIT_COUNT += 1
+
+                            apd["prev_timestamp"] = data['timestamp']
+                elif data['kpi_name'] == 'container_file_descriptors':
+                    if float(data['value']) - apd['pd']["value"][-3] > 8:
                         if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
