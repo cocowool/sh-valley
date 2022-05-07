@@ -351,12 +351,13 @@ def metric_stat():
 
 # 支持按照文件夹对文件夹内的文件进行画线
 def plt_all_metrics():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/service'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220320/cloudbed-1/metric/node'
 
-    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
+    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
     tdf = pd.read_csv( truth_file )
-    tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    # tdf = tdf[ ~ tdf['level'].str.contains('node')]
     tdf = tdf[ ~ tdf['level'].str.contains('pod')]
+    tdf = tdf[ ~ tdf['level'].str.contains('service')]
 
     # 需要忽略的 KPI
     ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
@@ -633,12 +634,12 @@ if __name__ == '__main__':
     # 对比 Metric 并绘图
     # plt_metrics()
 
-    # plt_all_metrics()
+    plt_all_metrics()
 
     # print(random_colormap(20))
 
     # 统计分析 metric 数据
-    metric_stat()
+    # metric_stat()
 
     # load_heads()
     # print("Test")
