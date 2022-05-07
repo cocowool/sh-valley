@@ -10,6 +10,7 @@ from adtk.detector import ThresholdAD
 from adtk.detector import QuantileAD
 from adtk.detector import GeneralizedESDTestAD
 from adtk.detector import LevelShiftAD
+from adtk.detector import PersistAD
 from adtk.detector import VolatilityShiftAD
 from adtk.detector import CustomizedDetectorHD
 
@@ -38,31 +39,32 @@ class DetectObject( object, metaclass = MetaClass):
     SERVICE_LIST = ['cartservice','productcatalogservice','recommendationservice','shippingservice','adservice','checkoutservice','frontend','currencyservice','emailservice','paymentservice']
     
     KPI_LIST = [ 
-        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "function_name" : 'threshold_detect', "parameter" : 60},
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "function_name" : 'threshold_detect', "parameter" : 60},
         # {"kpi_name":"system.cpu.pct_usage", "sample_time":120, "failure_type":"node节点CPU故障", "function_name" : 'maxmin_detect', "parameter" : 60},
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":5, "failure_type":"node节点CPU故障", "function_name" : 'spike_detect', "parameter" : 60},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'threshold_detect', "parameter" : ''},
-        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "function_name" : 'threshold_detect', "parameter" : ''},
-        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "function_name" : 'threshold_detect', "parameter" : ''}
+        # {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'threshold_detect', "parameter" : 100000''},
+        # {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "function_name" : 'threshold_detect', "parameter" : '45'},
+        # {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "function_name" : 'threshold_detect', "parameter" : ''}
         ]
 
     SERVICE_KPI_LIST = [
         # > 20
         # {"kpi_name":"container_cpu_usage_seconds","sample_time":120},
         # > 500
-        {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
-        # # >= 0.8
-        {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
-        # # > 3000
-        {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
-        # # > 5000
-        {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
-        # # > 95
-        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
-        # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
-        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器网络延迟"},
-        # # > 增量大于8
-        {"kpi_name" : "container_file_descriptors", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        # {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
+        # # # >= 0.8
+        # {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
+        # # # > 3000
+        # {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
+        # # # > 5000
+        # {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        # # # > 95
+        # {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        # # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
+        # {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器网络延迟"},
+        # # # > 增量大于8
+        # {"kpi_name" : "container_file_descriptors", "sample_time" : 10, "failure_type" : "k8s容器读io负载"},
 
     ]
     START_TIME = ''
@@ -100,18 +102,6 @@ class DetectObject( object, metaclass = MetaClass):
     def getKpi(self):
         return self.KPI_LIST
 
-# 为比赛创建的数据异常检测类
-class MoyuDetector():
-    def stdMean( self, df ):
-        anomalies = []
-        data_std = df.std()
-        print(data_std)
-        time.sleep(10)
-
-    # 峰值探测算法，检查最近的一条数据是否峰值，如果是峰值检查陡增的比例
-    def SpikeDetect(self, df):
-        pass
-
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
 
@@ -126,51 +116,6 @@ SERVICE_FAILURE_TYPE = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器
 # dev 表示测试模式
 PROCESS_MODE = 'pro'
 
-# CPU 数据的DataFrame存储
-DF_NODE1_CPU_USAGE = pd.DataFrame()
-DF_NODE2_CPU_USAGE = pd.DataFrame()
-DF_NODE3_CPU_USAGE = pd.DataFrame()
-DF_NODE4_CPU_USAGE = pd.DataFrame()
-DF_NODE5_CPU_USAGE = pd.DataFrame()
-DF_NODE6_CPU_USAGE = pd.DataFrame()
-SUBMIT_COUNT = 0
-
-# DISK 数据的DataFrame存储
-DF_NODE1_DISK_USAGE = pd.DataFrame()
-DF_NODE2_DISK_USAGE = pd.DataFrame()
-DF_NODE3_DISK_USAGE = pd.DataFrame()
-DF_NODE4_DISK_USAGE = pd.DataFrame()
-DF_NODE5_DISK_USAGE = pd.DataFrame()
-DF_NODE6_DISK_USAGE = pd.DataFrame()
-
-# MERGE Frome Wanglei
-#system.mem.pct_usage 数据的DataFrame存储---用于推理“node 内存消耗”故障
-NODE1_MEM_PCT_USAGE = [] #记录每个节点的一段时间内内内存使用率的数值
-NODE2_MEM_PCT_USAGE = []
-NODE3_MEM_PCT_USAGE = []
-NODE4_MEM_PCT_USAGE = []
-NODE5_MEM_PCT_USAGE = []
-NODE6_MEM_PCT_USAGE = []
-NODE1_LAST_MAX_MINUS_MIN=0   #记录每个节点的内存使用率最大和最小之间的差
-NODE1_CURRENT_MAX_MINUS_MIN=0
-NODE2_LAST_MAX_MINUS_MIN=0
-NODE2_CURRENT_MAX_MINUS_MIN=0
-NODE3_LAST_MAX_MINUS_MIN=0
-NODE3_CURRENT_MAX_MINUS_MIN=0
-NODE4_LAST_MAX_MINUS_MIN=0
-NODE4_CURRENT_MAX_MINUS_MIN=0
-NODE5_LAST_MAX_MINUS_MIN=0
-NODE5_CURRENT_MAX_MINUS_MIN=0
-NODE6_LAST_MAX_MINUS_MIN=0
-NODE6_CURRENT_MAX_MINUS_MIN=0
-NODE1_MEM_PROCESS_CNT=0  #处理计数，超过某个值后认为MAX-MIN基本平滑，不应有大的跳跃
-NODE2_MEM_PROCESS_CNT=0
-NODE3_MEM_PROCESS_CNT=0
-NODE4_MEM_PROCESS_CNT=0
-NODE5_MEM_PROCESS_CNT=0
-NODE6_MEM_PROCESS_CNT=0
-# MERGE Frome Wanglei 
-
 
 # 将时间戳转换为可读时间格式
 def timestampFormat(timestamp):
@@ -178,7 +123,6 @@ def timestampFormat(timestamp):
     otherStyleTime = dateArray.strftime("%Y-%m-%d %H:%M:%S")    
 
     return otherStyleTime
-
 
 # 记录提交日志
 def submit_log(message):
@@ -256,7 +200,7 @@ def kafka_consumer():
 
 # 以文佳件方式消费数据
 def local_folder_consumer():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/node'
 
     for parent, dir_lists, file_lists in os.walk(metric_folder):
         for file_name in file_lists:
@@ -341,11 +285,12 @@ def data_process( data ):
 # 固定阈值检测算法
 # apd , DetectObject 中初始化的 PD_LIST 对象
 # data , 需要处理的数据
-def threshold_detect(apd, data):
+# silent_period 静默时间，探测到异常之后连续多长时间不上报
+def threshold_detect(apd, data, silent_period = 600):
     global SUBMIT_COUNT
 
     if float(data['value']) > apd["parameter"]:
-        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
+        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > silent_period:
             res = submit([data['cmdb_id'], apd["failure_type"] ])
             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
             log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -354,6 +299,46 @@ def threshold_detect(apd, data):
             print(res)
             SUBMIT_COUNT += 1
             apd["prev_timestamp"] = data['timestamp']
+
+# 支持设置一个硬基线
+# 按照 window 取平均值和标准差，如果当前值与均值差异大于三倍标准差，认为是异常值
+# 支持按照同比增长百分比设置阈值（考虑分子为零的情况）
+def spike_detect(apd, data, sp_window = 5):
+    # print(data)
+    # # print( apd["pd"]["value"].rolling(window = sp_window, closed = 'left' ))
+    # print( apd["pd"]['value'] )
+    # print( apd["pd"]['value'][-6:-1] )
+    # print( apd["pd"]['value'][-6:-1].mean() )
+
+    # print( data['cmdb_id'] + ':' + str(data['value']) + ' - ' + str(apd["pd"]['value'][-2]) + ' = ' + str( (float(data['value']) - float(apd["pd"]['value'][-2]) ) / float(apd["pd"]['value'][-2]) ) )
+    if (float(data['value']) - float(apd["pd"]['value'][-2]) ) / float(apd["pd"]['value'][-2]) >  2.7:
+        print(data)
+
+    # print( apd["pd"]["value"].rolling(window = sp_window, closed = 'left' ).mean())
+    # print( apd["pd"]["value"].rolling(window = sp_window, closed = 'left' ).std())
+    # time.sleep(10)
+    # if float(data['value']) - apd['pd']["value"][-2] > 2:
+    #     if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
+    #         res = submit([data['cmdb_id'], apd["failure_type"] ])
+    #         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
+    #         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
+    #         log_message += 'Metric : ' + json.dumps(data) + '\n'
+    #         submit_log(log_message)
+    #         print(res)
+    #         SUBMIT_COUNT += 1
+    #         apd["prev_timestamp"] = data['timestamp']
+
+# adtk 检测方法
+def adtk_detect(apd, data):
+    s = validate_series(apd["pd"])
+    
+    persist_ad = PersistAD(window = 10, c = 30, side='positive', agg='mean')
+    anomalies = persist_ad.fit_detect(s)
+
+    if(anomalies.iloc[-1]['value'] == True):
+        print(data)
+    # print()
+    # time.sleep(1)
 
 # 改写 maxmin_node_mem 函数
 def maxmin_detect(apd, data):
@@ -379,30 +364,6 @@ def maxmin_detect(apd, data):
             SUBMIT_COUNT += 1
             apd["prev_timestamp"] = data['timestamp']
 
-    # pass
-
-            # NODE1_MEM_PCT_USAGE.append(float(data['value']))
-            # NODE1_MEM_PROCESS_CNT+=1
-            # if NODE1_MEM_PROCESS_CNT>window_size:
-            #     NODE1_MEM_PCT_USAGE.reverse()
-            #     NODE1_MEM_PCT_USAGE.pop()
-            #     NODE1_MEM_PCT_USAGE.reverse()
-              
-            #     NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
-            #     NODE1_CURRENT_MAX_MINUS_MIN=max(NODE1_MEM_PCT_USAGE)-min(NODE1_MEM_PCT_USAGE)
-            #     if(NODE1_LAST_MAX_MINUS_MIN)==0:
-            #         NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
-
-            #     f.write('NODE1-MAX/MIN'+','+str(NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN)+'\n')
-                
-            #     if NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN>1.7:
-            #         res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-            #         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-            #         log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-            #         log_message += 'Metric : ' + json.dumps(data) + '\n'
-            #         submit_log(log_message)
-            #         SUBMIT_COUNT += 1
-
 # 通用的异常检测方法，支持数据传入、指定 KPI 
 def adtk_common(data):
     global SUBMIT_COUNT
@@ -424,16 +385,7 @@ def adtk_common(data):
                 if data['cmdb_id'] == "node-6":
                     return False
 
-                if float(data['value']) > 100000:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
+                eval(apd["function_name"])(apd, data)
             elif data['kpi_name'] == 'system.io.await':
                 if float(data['value']) > 45:
                     if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
@@ -493,6 +445,10 @@ def adtk_common(data):
                 apd = obj_a.getPd(cmdb_key, data['kpi_name'])
                 apd["pd"] = apd["pd"].append( t_series )
                 apd["sample_count"] = apd["sample_count"] + 1
+
+
+                if apd['sample_count'] < apd['sample_time']:
+                    return True
 
                 if data['kpi_name'] == 'container_cpu_cfs_throttled_seconds':
 
@@ -624,214 +580,6 @@ def adtk_common(data):
                             apd["prev_timestamp"] = data['timestamp']
 
 
-            
-
-        # print( data )
-        # print( "No preset algorithm, continue !")
-
-# MERGE From Wanglei
-# 使用峰谷阶跃方法计算node 内存消耗  故障
-def maxmin_node_mem(data):
-    # 不是目标数据的，不计算直接返回
-    if not data.__contains__('kpi_name'):
-        return
-    global NODE1_MEM_PCT_USAGE  
-    global NODE2_MEM_PCT_USAGE
-    global NODE3_MEM_PCT_USAGE
-    global NODE4_MEM_PCT_USAGE
-    global NODE5_MEM_PCT_USAGE
-    global NODE6_MEM_PCT_USAGE
-    global NODE1_LAST_MAX_MINUS_MIN
-    global NODE1_CURRENT_MAX_MINUS_MIN
-    global NODE2_LAST_MAX_MINUS_MIN
-    global NODE2_CURRENT_MAX_MINUS_MIN
-    global NODE3_LAST_MAX_MINUS_MIN
-    global NODE3_CURRENT_MAX_MINUS_MIN
-    global NODE4_LAST_MAX_MINUS_MIN
-    global NODE4_CURRENT_MAX_MINUS_MIN
-    global NODE5_LAST_MAX_MINUS_MIN
-    global NODE5_CURRENT_MAX_MINUS_MIN
-    global NODE6_LAST_MAX_MINUS_MIN
-    global NODE6_CURRENT_MAX_MINUS_MIN
-    global NODE1_MEM_PROCESS_CNT
-    global NODE2_MEM_PROCESS_CNT
-    global NODE3_MEM_PROCESS_CNT
-    global NODE4_MEM_PROCESS_CNT
-    global NODE5_MEM_PROCESS_CNT
-    global NODE6_MEM_PROCESS_CNT
-    global SUBMIT_COUNT
-    window_size=120 #平滑的内存最大值和最小值之差的窗口，目前设置为2小时
-    if data['kpi_name'] == 'system.mem.pct_usage':
-        global PROCESS_MODE
-
-        if PROCESS_MODE == 'dev':
-            f = open('/Users/shiqiang/Projects/sh-valley/python/2022-ccb-aiops/wldebug.log', 'a')
-        else:
-            f = open('/data/logs/wldebug.log','a')
-
-       #f.write('function  maxmin_node_mem  get  system.mem.pct_usage \n')
-        f.write(str(data)+'\n')
-##        with open ('/data/logs/wl.log') as f:
-##            print（'func----maxmin_node_mem----',f）
-##            print(data,f)
-        if data['cmdb_id'] == 'node-1':
-
-            NODE1_MEM_PCT_USAGE.append(float(data['value']))
-            NODE1_MEM_PROCESS_CNT+=1
-            if NODE1_MEM_PROCESS_CNT>window_size:
-                NODE1_MEM_PCT_USAGE.reverse()
-                NODE1_MEM_PCT_USAGE.pop()
-                NODE1_MEM_PCT_USAGE.reverse()
-              
-                NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
-                NODE1_CURRENT_MAX_MINUS_MIN=max(NODE1_MEM_PCT_USAGE)-min(NODE1_MEM_PCT_USAGE)
-                if(NODE1_LAST_MAX_MINUS_MIN)==0:
-                    NODE1_LAST_MAX_MINUS_MIN=NODE1_CURRENT_MAX_MINUS_MIN
-
-                f.write('NODE1-MAX/MIN'+','+str(NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN)+'\n')
-                
-                if NODE1_CURRENT_MAX_MINUS_MIN/NODE1_LAST_MAX_MINUS_MIN>1.7:
-                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-                    log_message += 'Metric : ' + json.dumps(data) + '\n'
-                    submit_log(log_message)
-                    SUBMIT_COUNT += 1
-                    
-        elif data['cmdb_id'] == 'node-2':
-            NODE2_MEM_PCT_USAGE.append(float(data['value']))
-            NODE2_MEM_PROCESS_CNT+=1
-            if NODE2_MEM_PROCESS_CNT>window_size:
-                NODE2_MEM_PCT_USAGE.reverse()
-                NODE2_MEM_PCT_USAGE.pop()
-                NODE2_MEM_PCT_USAGE.reverse()
-        
-                NODE2_LAST_MAX_MINUS_MIN=NODE2_CURRENT_MAX_MINUS_MIN
-                NODE2_CURRENT_MAX_MINUS_MIN=max(NODE2_MEM_PCT_USAGE)-min(NODE2_MEM_PCT_USAGE)
-                if(NODE2_LAST_MAX_MINUS_MIN)==0:
-                    NODE2_LAST_MAX_MINUS_MIN=NODE2_CURRENT_MAX_MINUS_MIN
-                
-                f.write('NODE2-MAX/MIN'+','+str(NODE2_CURRENT_MAX_MINUS_MIN/NODE2_LAST_MAX_MINUS_MIN)+'\n')
-                
-                if NODE2_CURRENT_MAX_MINUS_MIN/NODE2_LAST_MAX_MINUS_MIN>1.7:
-                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-                    log_message += 'Metric : ' + json.dumps(data) + '\n'
-                    submit_log(log_message)
-                    SUBMIT_COUNT += 1
-      
-        elif data['cmdb_id'] == 'node-3':
-            NODE3_MEM_PCT_USAGE.append(float(data['value']))
-            NODE3_MEM_PROCESS_CNT+=1
-            if NODE3_MEM_PROCESS_CNT>window_size:
-                NODE3_MEM_PCT_USAGE.reverse()
-                NODE3_MEM_PCT_USAGE.pop()
-                NODE3_MEM_PCT_USAGE.reverse()
-                #f.write(NODE3_MEM_PCT_USAGE)
-                NODE3_LAST_MAX_MINUS_MIN=NODE3_CURRENT_MAX_MINUS_MIN
-                NODE3_CURRENT_MAX_MINUS_MIN=max(NODE3_MEM_PCT_USAGE)-min(NODE3_MEM_PCT_USAGE)
-                if(NODE3_LAST_MAX_MINUS_MIN)==0:
-                    NODE3_LAST_MAX_MINUS_MIN=NODE3_CURRENT_MAX_MINUS_MIN
-
-                f.write('NODE3-MAX/MIN'+','+str(NODE3_CURRENT_MAX_MINUS_MIN/NODE3_LAST_MAX_MINUS_MIN)+'\n')
-                    
-                if NODE3_CURRENT_MAX_MINUS_MIN/NODE3_LAST_MAX_MINUS_MIN>1.7:
-                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-                    log_message += 'Metric : ' + json.dumps(data) + '\n'
-                    submit_log(log_message)
-                    SUBMIT_COUNT += 1
-   
-        elif data['cmdb_id'] == 'node-4':
-            NODE4_MEM_PCT_USAGE.append(float(data['value']))
-            NODE4_MEM_PROCESS_CNT+=1
-            if NODE4_MEM_PROCESS_CNT>window_size:
-                NODE4_MEM_PCT_USAGE.reverse()
-                NODE4_MEM_PCT_USAGE.pop()
-                NODE4_MEM_PCT_USAGE.reverse()
-                #f.write(NODE4_MEM_PCT_USAGE)
-                NODE4_LAST_MAX_MINUS_MIN=NODE4_CURRENT_MAX_MINUS_MIN
-                NODE4_CURRENT_MAX_MINUS_MIN=max(NODE4_MEM_PCT_USAGE)-min(NODE4_MEM_PCT_USAGE)
-                if(NODE4_LAST_MAX_MINUS_MIN)==0:
-                    NODE4_LAST_MAX_MINUS_MIN=NODE4_CURRENT_MAX_MINUS_MIN
-
-                f.write('NODE4-MAX/MIN'+','+str(NODE4_CURRENT_MAX_MINUS_MIN/NODE4_LAST_MAX_MINUS_MIN)+'\n')
-                
-                if NODE4_CURRENT_MAX_MINUS_MIN/NODE4_LAST_MAX_MINUS_MIN>1.7:
-                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-                    log_message += 'Metric : ' + json.dumps(data) + '\n'
-                    submit_log(log_message)
-                    SUBMIT_COUNT += 1
-     
-        elif data['cmdb_id'] == 'node-5':
-            NODE5_MEM_PCT_USAGE.append(float(data['value']))
-            NODE5_MEM_PROCESS_CNT+=1
-            if NODE5_MEM_PROCESS_CNT>window_size:
-                NODE5_MEM_PCT_USAGE.reverse()
-                NODE5_MEM_PCT_USAGE.pop()
-                NODE5_MEM_PCT_USAGE.reverse()
-                #f.write(NODE5_MEM_PCT_USAGE)
-                NODE5_LAST_MAX_MINUS_MIN=NODE5_CURRENT_MAX_MINUS_MIN
-                NODE5_CURRENT_MAX_MINUS_MIN=max(NODE5_MEM_PCT_USAGE)-min(NODE5_MEM_PCT_USAGE)
-                if(NODE5_LAST_MAX_MINUS_MIN)==0:
-                    NODE5_LAST_MAX_MINUS_MIN=NODE5_CURRENT_MAX_MINUS_MIN
-
-                f.write('NODE5-MAX/MIN'+','+str(NODE5_CURRENT_MAX_MINUS_MIN/NODE5_LAST_MAX_MINUS_MIN)+'\n') 
-                    
-                if NODE5_CURRENT_MAX_MINUS_MIN/NODE5_LAST_MAX_MINUS_MIN>1.7:
-                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-                    log_message += 'Metric : ' + json.dumps(data) + '\n'
-                    submit_log(log_message)
-                    SUBMIT_COUNT += 1
-    
-        elif data['cmdb_id'] == 'node-6':
-            NODE6_MEM_PCT_USAGE.append(float(data['value']))
-            NODE6_MEM_PROCESS_CNT+=1
-            if NODE6_MEM_PROCESS_CNT>window_size:
-                NODE6_MEM_PCT_USAGE.reverse()
-                NODE6_MEM_PCT_USAGE.pop()
-                NODE6_MEM_PCT_USAGE.reverse()
-                #f.write(NODE6_MEM_PCT_USAGE)
-                NODE6_LAST_MAX_MINUS_MIN=NODE6_CURRENT_MAX_MINUS_MIN
-                NODE6_CURRENT_MAX_MINUS_MIN=max(NODE6_MEM_PCT_USAGE)-min(NODE1_MEM_PCT_USAGE)
-                if(NODE6_LAST_MAX_MINUS_MIN)==0:
-                    NODE6_LAST_MAX_MINUS_MIN=NODE6_CURRENT_MAX_MINUS_MIN
-
-                f.write('NODE6-MAX/MIN'+','+str(NODE6_CURRENT_MAX_MINUS_MIN/NODE6_LAST_MAX_MINUS_MIN)+'\n')
-                    
-                if NODE6_CURRENT_MAX_MINUS_MIN/NODE6_LAST_MAX_MINUS_MIN>1.7:
-                    res = submit([data['cmdb_id'], NODE_FAILURE_TYPE[3]])
-                    log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                    log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[3] + '], Result: ' + res + '\n'
-                    log_message += 'Metric : ' + json.dumps(data) + '\n'
-                    submit_log(log_message)
-                    SUBMIT_COUNT += 1
-        f.close()
-     
-# MERGE From Wanglei End
-
-# 自己编写的异常检测程序
-def SimpleDetect( df ):
-    return (df['value'] > 20 )
-
-# 分析CPU故障场景
-def cpu_pct(data, i):
-    if float(data['value']) > 20:
-        # node节点CPU故障
-        # print(data)
-        res = submit([data['cmdb_id'], SERVICE_FAILURE_TYPE[4]])
-        log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-        log_message += 'Content: [' + data['cmdb_id'] + ', ' + NODE_FAILURE_TYPE[4] + '], Result: ' + res + '\n'
-        log_message += 'Metric : ' + data + '\n'
-        submit_log(log_message)
-        print(res)
-
 # 仅打印 Kafka 中的内容
 def kafka_print():
     CONSUMER = KafkaConsumer(
@@ -854,8 +602,6 @@ def kafka_print():
         data = json.loads(data)
         print(data)
 
-
-
 # 测试用的方法
 def test():
     # print(random.choice(SERVICE_FAILURE_TYPE))
@@ -864,25 +610,6 @@ def test():
     data = json.loads(ops_str)
     print(data)
     print(data['timestamp'])
-
-# 初始化加载训练数据
-def init_data():
-    global DF_NODE1_CPU_USAGE
-
-    node1_cpu_pct_usage_file = 'node1-system.cpu.pct_usage.txt'
-    f = open(node1_cpu_pct_usage_file, 'r', encoding='utf-8')
-    line = f.readline()
-    normal_data = []
-
-    while line:
-        # print(line, end='')
-        line = f.readline().strip()
-        fields = line.split(',')
-        if len(fields) > 1:
-            series = pd.Series({"value" : float(fields[3])}, name=timestampFormat(int(fields[0])) )
-            DF_NODE1_CPU_USAGE = DF_NODE1_CPU_USAGE.append( series )
-            print(DF_NODE1_CPU_USAGE)
-    f.close()
 
 if __name__ == '__main__':
     print("2022 CCB AIOPS Match by " + sys.argv[0])
@@ -895,25 +622,8 @@ if __name__ == '__main__':
             PROCESS_MODE = a
 
     obj_a = DetectObject()
-    # opd = obj_a.getPd("node-1","system.cpu.pct_usage")
-    # opd["pd"] = opd["pd"].append( pd.Series( {"value" : 99}, name="11") )
 
     if PROCESS_MODE == 'dev':
         local_folder_consumer()
     else:
         kafka_consumer()
-
-    # print(obj_a)
-
-    # print(PROCESS_MODE)
-    # 支持命令行参数，方便调试
-    # kafka_consumer()
-# submit_log()
-# kafka_print()
-
-# i = 1
-# log_message = 'The ' + str(i) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-# log_message += 'Content: [service, ' + random.choice(SERVICE_FAILURE_TYPE) + '], Result: ' + '\n'
-
-# print(log_message)
-# submit_log(log_message)
