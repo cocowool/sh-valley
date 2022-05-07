@@ -3,6 +3,7 @@
 from dataclasses import field
 from distutils.log import error
 import json, datetime, requests, os, time, random, getopt, sys
+from pyparsing import alphanums
 from posixpath import split
 from numpy import empty
 from kafka import KafkaConsumer
@@ -14,9 +15,10 @@ from adtk.transformer import RollingAggregate
 from adtk.transformer import DoubleRollingAggregate
 from adtk.visualization import plot
 from adtk.detector import ThresholdAD
+from adtk.detector import PersistAD
 import matplotlib.pyplot as plt
 import matplotlib as matplotlib
-
+import matplotlib.patches as patches
 
 # 提交答案服务域名或IP, 将在赛前告知
 HOST = "http://10.3.2.40:30083"
@@ -255,34 +257,19 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
         plt.show()
     return cmap
 
-# 对 Metric 进行统计，思路：
-# 加载 groudtruth 数据
-# 依次遍历 metric 文件
-# 统计数值为 0 的指标并汇总打印列表
-# 统计在故障时点 10 分钟内，并且数值大于一天的 90% 的指标，汇总并打印列表。即：对每日指标数据求最大值，如时间戳与故障点时间戳之差在 10 分钟内，即打印。
-# 统计在故障点 10 分钟内，故障点后 5 个数值在每日样本中的排名
-def metric_stat():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/'
+# 画出故障点期间，多个指标的聚合图，每个指标一个子图
+# 从而来分析关联性
+def error_plt( plot_folder = 'node' ):
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/' + plot_folder
 
     truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
-    # tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    tdf = tdf[ ~ tdf['level'].str.contains('node')]
     # tdf = tdf[ ~ tdf['level'].str.contains('pod')]
+    # tdf = tdf[ ~ tdf['level'].str.contains('service')]
 
-    ignore_kpi_lists = ['istio_tcp_sent_bytes.UF,URX', 'istio_request_duration_milliseconds.grpc.200.2.0', 'istio_requests.grpc.200.2.0', 'istio_agent_pilot_conflict_outbound_listener_http_over_current_tcp', 'istio_agent_go_memstats_lookups', 'istio_agent_pilot_vservice_dup_domain', 'istio_agent_wasm_cache_entries', 'istio_tcp_connections_opened.UF,URX', 'istio_tcp_connections_closed.UF,URX', 'istio_agent_pilot_eds_no_instances', 'istio_request_bytes.grpc.200.2.0', 'istio_response_bytes.grpc.0.2.0', 'istio_response_bytes.grpc.200.2.0', 'istio_response_bytes.http.0.', 'istio_agent_pilot_conflict_outbound_listener_tcp_over_current_http', 'istio_tcp_received_bytes.UF,URX', 'istio_agent_pilot_conflict_outbound_listener_tcp_over_current_tcp', 'istio_agent_pilot_endpoint_not_ready', 'istio_agent_pilot_conflict_inbound_listener', 'istio_agent_endpoint_no_pod', 'istio_agent_pilot_no_ip', 'istio_agent_pilot_duplicate_envoy_clusters', 'istio_agent_pilot_virt_services', 'istio_agent_pilot_destrule_subsets', 'java_nio_BufferPool_TotalCapacity.mapped', 'jvm_threads_deadlocked_monitor', 'java_lang_MemoryPool_CollectionUsageThresholdSupported.Metaspace', 'java_lang_MemoryPool_CollectionUsageThresholdSupported.Compressed_Class_Space', 'java_lang_MemoryPool_CollectionUsageThresholdSupported.Code_Cache', 'jvm_buffer_pool_used_buffers.mapped', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Metaspace.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Metaspace.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Compressed_Class_Space.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Compressed_Class_Space.Copy', 'java_lang_MemoryPool_UsageThreshold.Compressed_Class_Space', 'java_lang_MemoryPool_UsageThreshold.Metaspace', 'java_lang_MemoryPool_UsageThreshold.Code_Cache', 'java_lang_MemoryPool_UsageThreshold.Tenured_Gen', 'java_lang_MemoryPool_Usage_init.Metaspace', 'java_lang_MemoryPool_Usage_init.Compressed_Class_Space', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Compressed_Class_Space.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Metaspace.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Metaspace.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Compressed_Class_Space.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_used.Eden_Space.MarkSweepCompact', 'java_lang_OperatingSystem_FreeSwapSpaceSize', 'jvm_threads_deadlocked', 'jvm_buffer_pool_capacity_MB.mapped', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_used.Survivor_Space.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_used.Eden_Space.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_used.Eden_Space.MarkSweepCompact', 'jvm_memory_pool_MB_init.Metaspace', 'jvm_memory_pool_MB_init.Compressed_Class_Space', 'java_lang_MemoryPool_CollectionUsageThresholdExceeded.Eden_Space', 'java_lang_MemoryPool_CollectionUsageThresholdExceeded.Survivor_Space', 'java_lang_MemoryPool_CollectionUsageThresholdExceeded.Tenured_Gen', 'java_lang_MemoryPool_CollectionUsage_used.Eden_Space', 'jvm_buffer_pool_used_MB.mapped', 'java_nio_BufferPool_Count.mapped', 'java_lang_MemoryPool_CollectionUsageThreshold.Eden_Space', 'java_lang_MemoryPool_CollectionUsageThreshold.Survivor_Space', 'java_lang_MemoryPool_CollectionUsageThreshold.Tenured_Gen', 'java_lang_Memory_Verbose', 'java_lang_ClassLoading_Verbose', 'jvm_threads_state.BLOCKED', 'jvm_threads_state.NEW', 'jvm_threads_state.TERMINATED', 'java_lang_Threading_ThreadContentionMonitoringEnabled', 'java_lang_MemoryPool_UsageThresholdSupported.Eden_Space', 'java_lang_MemoryPool_UsageThresholdSupported.Survivor_Space', 'java_nio_BufferPool_MemoryUsed.mapped', 'java_lang_MemoryPool_UsageThresholdCount.Code_Cache', 'java_lang_MemoryPool_UsageThresholdCount.Compressed_Class_Space', 'java_lang_MemoryPool_UsageThresholdCount.Metaspace', 'java_lang_MemoryPool_UsageThresholdCount.Tenured_Gen', 'java_lang_MemoryPool_CollectionUsageThresholdCount.Eden_Space', 'java_lang_MemoryPool_CollectionUsageThresholdCount.Tenured_Gen', 'java_lang_MemoryPool_CollectionUsageThresholdCount.Survivor_Space', 'java_lang_OperatingSystem_TotalSwapSpaceSize', 'java_lang_MemoryPool_PeakUsage_init.Metaspace', 'java_lang_MemoryPool_PeakUsage_init.Compressed_Class_Space', 'java_lang_MemoryPool_UsageThresholdExceeded.Code_Cache', 'java_lang_MemoryPool_UsageThresholdExceeded.Tenured_Gen', 'java_lang_MemoryPool_UsageThresholdExceeded.Metaspace', 'java_lang_MemoryPool_UsageThresholdExceeded.Compressed_Class_Space', 'container_network_transmit_packets_dropped.eth0', 'container_network_receive_errors.eth0', 'container_fs_writes_merged./dev/vda1', 'container_threads_max', 'container_fs_write_seconds./dev/vda1', 'container_fs_inodes_free./dev/vda1', 'container_fs_sector_reads./dev/vda1', 'container_fs_reads./dev/vda1', 'container_fs_io_time_weighted_seconds./dev/vda1', 'container_fs_sector_writes./dev/vda1', 'container_fs_io_current./dev/vda1', 'container_fs_io_time_seconds./dev/vda1', 'container_fs_writes./dev/vda1', 'container_tasks_state.iowaiting', 'container_tasks_state.running', 'container_tasks_state.uninterruptible', 'container_tasks_state.sleeping', 'container_tasks_state.stopped', 'container_fs_read_seconds./dev/vda1', 'container_spec_memory_reservation_limit_MB', 'container_memory_swap', 'container_network_transmit_errors.eth0', 'container_fs_reads_merged./dev/vda1', 'container_cpu_load_average_10s', 'system.net.udp.snd_buf_errors', 'system.swap.used_pct', 'system.net.udp.rcv_buf_errors', 'system.net.packets_out.error', 'system.swap.free', 'system.swap.total', 'system.swap.used', 'system.disk.readonly', 'system.swap.so', 'system.swap.si']
-
-    ignore_equal_lists = []
-
-    # 0值 119，非0值 462
-    zero_kpi_list = []
-    equal_kpi_list = []
-    nonzero_kpi_list = []
-    nonzero_union_list = []
-    # { kpi_name : '', file_name : '', max_value : '', error_timestamp : '', max_value_timestamp : '' }
-    max_value_kpi_list = {}
-    # { }
-    error_value_pct = {}
-
+    # 需要忽略的 KPI
+    ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
 
     df = pd.DataFrame()
     for parent, dir_lists, file_lists in os.walk(metric_folder):
@@ -301,57 +288,118 @@ def metric_stat():
                 elif 'metric_service' in file_name:
                     df = pd.read_csv( file_name  )
                     df = df.sort_values('timestamp') 
+                    # print(df)
+                    # time.sleep(1)
+
+                    service_list = df['service'].unique()
+                    # cmdb_list = df['cmdb_id'].unique()
+
+                    print(service_list)
+                    print(len(service_list))
+                    # print(cmdb_list)
+                    # print(len(cmdb_list))
+
+                    # 每个服务对应一张图，因此循环遍历
+                    for single_service in service_list:
+                        if single_service in ignore_kpi_lists:
+                            continue
+
+                        print(single_service)
+                        xdf = df[ df['service'].str.contains( single_service )]
+                        # sub_cmdb = xdf['cmdb_id'].unique()
+
+                        # if xdf['value'].max() == 0 and xdf['value'].min() == 0 and xdf['value'].mean() == 0:
+                        #     continue
+
+                        # 为便于观察，超过10条的线每次画 10 条
+                        plt_dataframe( xdf, 'timestamp', 'value', ['rr','sr','mrt','count'], 'Timestamp', single_service, tdf )
+
                 elif 'kpi_' in file_name:
+
                     df = pd.read_csv( file_name  )
                     df = df.sort_values('timestamp') 
+                    # print(df)
+                    # time.sleep(1)
 
                     kpi_list = df['kpi_name'].unique()
                     cmdb_list = df['cmdb_id'].unique()
 
-                    # 每个指标对应一张图，因此循环遍历 KPI_LIST
-                    for single_kpi in kpi_list:
-                        if single_kpi in ignore_kpi_lists:
-                            continue
+                    print(kpi_list)
+                    print(len(kpi_list))
+                    print(cmdb_list)
+                    print(len(cmdb_list))
 
-                        xdf = df[ df['kpi_name'].str.contains( single_kpi )]
 
-                        if xdf['value'].max() == 0 and xdf['value'].min() == 0 and xdf['value'].mean() == 0:
-                            zero_kpi_list.append( single_kpi )
-                        else:
-                            # 如果每个 cmdb_id 对应的 kpi 值也是一条直线，则也忽略
-                            for single_cmdb in cmdb_list:
-                                if single_cmdb+':'+single_kpi in ignore_equal_lists:
-                                    continue
+                    for single_cmdb in cmdb_list:
+                        xdf = df[ df['cmdb_id'].str.contains(single_cmdb) ]
 
-                                zdf = xdf[ xdf['cmdb_id'].str.contains( single_cmdb ) ]
+                        plt_multi_subs(xdf, tdf)
+                    # # 每个指标对应一张图，因此循环遍历 KPI_LIST
+                    # for single_kpi in kpi_list:
+                    #     if single_kpi in ignore_kpi_lists:
+                    #         continue
 
-                                if zdf.empty:
-                                    continue
+                    #     print(single_kpi)
+                    #     xdf = df[ df['kpi_name'].str.contains( single_kpi )]
+                    #     sub_cmdb = xdf['cmdb_id'].unique()
 
-                                if zdf['value'].max() == zdf['value'].min() and zdf['value'].std() == 0:
-                                    if single_cmdb + ':' + single_kpi not in equal_kpi_list:
-                                        equal_kpi_list.append( single_cmdb + ':' + single_kpi)
-                                else:
-                                    if single_kpi not in nonzero_kpi_list:
-                                        nonzero_kpi_list.append(single_kpi)
+                    #     if xdf['value'].max() == 0 and xdf['value'].min() == 0 and xdf['value'].mean() == 0:
+                    #         continue
 
-                                    if single_cmdb + ':' + single_kpi not in nonzero_union_list:
-                                        nonzero_union_list.append( single_cmdb + ':' + single_kpi )
+                    #     # 为便于观察，超过10条的线每次画 10 条
+                    #     plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'Timestamp', single_kpi, tdf )
+                        # if len(sub_cmdb) > 1 and  len(sub_cmdb) > 10:
+                        #     pass
+                        # elif len(sub_cmdb) > 1 and len(sub_cmdb) <= 10:
+                        # else:
+                        #     pass
 
-                                    for index, row in tdf.iterrows():
-                                        if abs(row['timestamp'] - df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) < 10:
-                                            print( single_cmdb + ':' + single_kpi + ': max = ' + str(zdf['value'].max() ) + ', row index = ' + str(zdf['value'].idxmax() ) + ', timestamp = ' + str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) )
-                                            print(row)
-                                            max_value_kpi_list[single_cmdb + ':' + single_kpi] = { 'cmdb_id' : single_cmdb, 'kpi_name' : single_kpi, 'max_value' : zdf['value'].max(), 'timestamp' : str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) ,'error_timestamp' : str(row['timestamp']), 'level' : row['level'],  'error_cmdb_id' : row['cmdb_id'], 'failure_type' : row['failure_type'] }
+def plt_multi_subs(df, tdf, max_sub = 16):
+    colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
 
-    print('len(equal_kpi_list) = ' + str(len(equal_kpi_list)))
-    print('len(nonzero_kpi_list) = ' +  str(len(nonzero_kpi_list)))
-    print('len(nonzero_union_list) = ' +  str(len(nonzero_union_list)))
-    print(max_value_kpi_list)
+    fig, axes = plt.subplots(2, 2, figsize=(16,8))
+    plt.rcParams["figure.autolayout"] = True
+    plt.rcParams['font.sans-serif'] = ['Songti SC']
+    plt.rcParams['axes.unicode_minus'] = False
+
+    x = 0
+    y = 0
+    max_x = 1
+    max_y = 1
+
+    kpi_lists =  df['kpi_name'].unique()
+    for signle_kpi in kpi_lists:
+        xdf = df[ df['kpi_name'].str.contains(signle_kpi) ]
+
+        #@TODO 去掉零值
+
+        if x <= max_x and y <= max_y:
+            print( str(x) + ',' + str(y))
+            ax = axes[x, y]
+            ax.plot( xdf['timestamp'], xdf['value'])
+            # ax.fill(1647823965, 2, 'red', alpha = 0.3)
+            ax.add_patch(patches.Rectangle((1647823965, 0), 100, xdf['value'].max(),facecolor="red",alpha=0.3))
+            ax.set_title(xdf['cmdb_id'].iloc[1] + ':' + signle_kpi)
+            y = y + 1
+
+            if y > max_y:
+                y = 0
+                x = x + 1
+
+            if x > max_x:
+                # print("xxxx")
+                plt.show()
+                fig, axes = plt.subplots(2, 2, figsize=(16,8))
+                plt.rcParams["figure.autolayout"] = True
+                plt.rcParams['font.sans-serif'] = ['Songti SC']
+                plt.rcParams['axes.unicode_minus'] = False
+                x = 0
+
+    # plt.show()
 
 # 支持按照文件夹对文件夹内的文件进行画线
-def plt_all_metrics():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/container'
+def plt_all_metrics(plot_folder = 'node'):
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/' + plot_folder
 
     truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
@@ -626,24 +674,121 @@ def plt_metrics():
         plt_dataframe( xdf, 'timestamp', 'value', 'cmdb_id', 'timestamp', i , tdf)
         print('===========================')
 
+# 对 Metric 进行统计，思路：
+# 加载 groudtruth 数据
+# 依次遍历 metric 文件
+# 统计数值为 0 的指标并汇总打印列表
+# 统计在故障时点 10 分钟内，并且数值大于一天的 90% 的指标，汇总并打印列表。即：对每日指标数据求最大值，如时间戳与故障点时间戳之差在 10 分钟内，即打印。
+# 统计在故障点 10 分钟内，故障点后 5 个数值在每日样本中的排名
+def metric_stat():
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/'
+
+    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
+    tdf = pd.read_csv( truth_file )
+    # tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    # tdf = tdf[ ~ tdf['level'].str.contains('pod')]
+
+    ignore_kpi_lists = ['istio_tcp_sent_bytes.UF,URX', 'istio_request_duration_milliseconds.grpc.200.2.0', 'istio_requests.grpc.200.2.0', 'istio_agent_pilot_conflict_outbound_listener_http_over_current_tcp', 'istio_agent_go_memstats_lookups', 'istio_agent_pilot_vservice_dup_domain', 'istio_agent_wasm_cache_entries', 'istio_tcp_connections_opened.UF,URX', 'istio_tcp_connections_closed.UF,URX', 'istio_agent_pilot_eds_no_instances', 'istio_request_bytes.grpc.200.2.0', 'istio_response_bytes.grpc.0.2.0', 'istio_response_bytes.grpc.200.2.0', 'istio_response_bytes.http.0.', 'istio_agent_pilot_conflict_outbound_listener_tcp_over_current_http', 'istio_tcp_received_bytes.UF,URX', 'istio_agent_pilot_conflict_outbound_listener_tcp_over_current_tcp', 'istio_agent_pilot_endpoint_not_ready', 'istio_agent_pilot_conflict_inbound_listener', 'istio_agent_endpoint_no_pod', 'istio_agent_pilot_no_ip', 'istio_agent_pilot_duplicate_envoy_clusters', 'istio_agent_pilot_virt_services', 'istio_agent_pilot_destrule_subsets', 'java_nio_BufferPool_TotalCapacity.mapped', 'jvm_threads_deadlocked_monitor', 'java_lang_MemoryPool_CollectionUsageThresholdSupported.Metaspace', 'java_lang_MemoryPool_CollectionUsageThresholdSupported.Compressed_Class_Space', 'java_lang_MemoryPool_CollectionUsageThresholdSupported.Code_Cache', 'jvm_buffer_pool_used_buffers.mapped', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Metaspace.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Metaspace.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Compressed_Class_Space.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_init.Compressed_Class_Space.Copy', 'java_lang_MemoryPool_UsageThreshold.Compressed_Class_Space', 'java_lang_MemoryPool_UsageThreshold.Metaspace', 'java_lang_MemoryPool_UsageThreshold.Code_Cache', 'java_lang_MemoryPool_UsageThreshold.Tenured_Gen', 'java_lang_MemoryPool_Usage_init.Metaspace', 'java_lang_MemoryPool_Usage_init.Compressed_Class_Space', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Compressed_Class_Space.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Metaspace.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Metaspace.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_init.Compressed_Class_Space.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageBeforeGc_used.Eden_Space.MarkSweepCompact', 'java_lang_OperatingSystem_FreeSwapSpaceSize', 'jvm_threads_deadlocked', 'jvm_buffer_pool_capacity_MB.mapped', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_used.Survivor_Space.MarkSweepCompact', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_used.Eden_Space.Copy', 'java_lang_GarbageCollector_LastGcInfo_memoryUsageAfterGc_used.Eden_Space.MarkSweepCompact', 'jvm_memory_pool_MB_init.Metaspace', 'jvm_memory_pool_MB_init.Compressed_Class_Space', 'java_lang_MemoryPool_CollectionUsageThresholdExceeded.Eden_Space', 'java_lang_MemoryPool_CollectionUsageThresholdExceeded.Survivor_Space', 'java_lang_MemoryPool_CollectionUsageThresholdExceeded.Tenured_Gen', 'java_lang_MemoryPool_CollectionUsage_used.Eden_Space', 'jvm_buffer_pool_used_MB.mapped', 'java_nio_BufferPool_Count.mapped', 'java_lang_MemoryPool_CollectionUsageThreshold.Eden_Space', 'java_lang_MemoryPool_CollectionUsageThreshold.Survivor_Space', 'java_lang_MemoryPool_CollectionUsageThreshold.Tenured_Gen', 'java_lang_Memory_Verbose', 'java_lang_ClassLoading_Verbose', 'jvm_threads_state.BLOCKED', 'jvm_threads_state.NEW', 'jvm_threads_state.TERMINATED', 'java_lang_Threading_ThreadContentionMonitoringEnabled', 'java_lang_MemoryPool_UsageThresholdSupported.Eden_Space', 'java_lang_MemoryPool_UsageThresholdSupported.Survivor_Space', 'java_nio_BufferPool_MemoryUsed.mapped', 'java_lang_MemoryPool_UsageThresholdCount.Code_Cache', 'java_lang_MemoryPool_UsageThresholdCount.Compressed_Class_Space', 'java_lang_MemoryPool_UsageThresholdCount.Metaspace', 'java_lang_MemoryPool_UsageThresholdCount.Tenured_Gen', 'java_lang_MemoryPool_CollectionUsageThresholdCount.Eden_Space', 'java_lang_MemoryPool_CollectionUsageThresholdCount.Tenured_Gen', 'java_lang_MemoryPool_CollectionUsageThresholdCount.Survivor_Space', 'java_lang_OperatingSystem_TotalSwapSpaceSize', 'java_lang_MemoryPool_PeakUsage_init.Metaspace', 'java_lang_MemoryPool_PeakUsage_init.Compressed_Class_Space', 'java_lang_MemoryPool_UsageThresholdExceeded.Code_Cache', 'java_lang_MemoryPool_UsageThresholdExceeded.Tenured_Gen', 'java_lang_MemoryPool_UsageThresholdExceeded.Metaspace', 'java_lang_MemoryPool_UsageThresholdExceeded.Compressed_Class_Space', 'container_network_transmit_packets_dropped.eth0', 'container_network_receive_errors.eth0', 'container_fs_writes_merged./dev/vda1', 'container_threads_max', 'container_fs_write_seconds./dev/vda1', 'container_fs_inodes_free./dev/vda1', 'container_fs_sector_reads./dev/vda1', 'container_fs_reads./dev/vda1', 'container_fs_io_time_weighted_seconds./dev/vda1', 'container_fs_sector_writes./dev/vda1', 'container_fs_io_current./dev/vda1', 'container_fs_io_time_seconds./dev/vda1', 'container_fs_writes./dev/vda1', 'container_tasks_state.iowaiting', 'container_tasks_state.running', 'container_tasks_state.uninterruptible', 'container_tasks_state.sleeping', 'container_tasks_state.stopped', 'container_fs_read_seconds./dev/vda1', 'container_spec_memory_reservation_limit_MB', 'container_memory_swap', 'container_network_transmit_errors.eth0', 'container_fs_reads_merged./dev/vda1', 'container_cpu_load_average_10s', 'system.net.udp.snd_buf_errors', 'system.swap.used_pct', 'system.net.udp.rcv_buf_errors', 'system.net.packets_out.error', 'system.swap.free', 'system.swap.total', 'system.swap.used', 'system.disk.readonly', 'system.swap.so', 'system.swap.si']
+
+    ignore_equal_lists = []
+
+    # 0值 119，非0值 462
+    zero_kpi_list = []
+    equal_kpi_list = []
+    nonzero_kpi_list = []
+    nonzero_union_list = []
+    # { kpi_name : '', file_name : '', max_value : '', error_timestamp : '', max_value_timestamp : '' }
+    max_value_kpi_list = {}
+    # { }
+    error_value_pct = {}
+
+
+    df = pd.DataFrame()
+    for parent, dir_lists, file_lists in os.walk(metric_folder):
+        for file_name in file_lists:
+            if file_name.endswith('csv'):
+                file_name = os.path.join(parent, file_name)
+                print(file_name)
+                # f = open(file_name, 'r', encoding='utf-8')
+                # line = f.readline()
+                # f.close()
+
+                if 'trace_jaeger' in file_name:
+                    pass
+                elif 'log_filebeat' in file_name:
+                    pass
+                elif 'metric_service' in file_name:
+                    df = pd.read_csv( file_name  )
+                    df = df.sort_values('timestamp') 
+                elif 'kpi_' in file_name:
+                    df = pd.read_csv( file_name  )
+                    df = df.sort_values('timestamp') 
+
+                    kpi_list = df['kpi_name'].unique()
+                    cmdb_list = df['cmdb_id'].unique()
+
+                    # 每个指标对应一张图，因此循环遍历 KPI_LIST
+                    for single_kpi in kpi_list:
+                        if single_kpi in ignore_kpi_lists:
+                            continue
+
+                        xdf = df[ df['kpi_name'].str.contains( single_kpi )]
+
+                        if xdf['value'].max() == 0 and xdf['value'].min() == 0 and xdf['value'].mean() == 0:
+                            zero_kpi_list.append( single_kpi )
+                        else:
+                            # 如果每个 cmdb_id 对应的 kpi 值也是一条直线，则也忽略
+                            for single_cmdb in cmdb_list:
+                                if single_cmdb+':'+single_kpi in ignore_equal_lists:
+                                    continue
+
+                                zdf = xdf[ xdf['cmdb_id'].str.contains( single_cmdb ) ]
+
+                                if zdf.empty:
+                                    continue
+
+                                if zdf['value'].max() == zdf['value'].min() and zdf['value'].std() == 0:
+                                    if single_cmdb + ':' + single_kpi not in equal_kpi_list:
+                                        equal_kpi_list.append( single_cmdb + ':' + single_kpi)
+                                else:
+                                    if single_kpi not in nonzero_kpi_list:
+                                        nonzero_kpi_list.append(single_kpi)
+
+                                    if single_cmdb + ':' + single_kpi not in nonzero_union_list:
+                                        nonzero_union_list.append( single_cmdb + ':' + single_kpi )
+
+                                    for index, row in tdf.iterrows():
+                                        if abs(row['timestamp'] - df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) < 10:
+                                            print( single_cmdb + ':' + single_kpi + ': max = ' + str(zdf['value'].max() ) + ', row index = ' + str(zdf['value'].idxmax() ) + ', timestamp = ' + str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) )
+                                            print(row)
+                                            max_value_kpi_list[single_cmdb + ':' + single_kpi] = { 'cmdb_id' : single_cmdb, 'kpi_name' : single_kpi, 'max_value' : zdf['value'].max(), 'timestamp' : str(df.iloc[ zdf['value'].idxmax() + 1 ]['timestamp']) ,'error_timestamp' : str(row['timestamp']), 'level' : row['level'],  'error_cmdb_id' : row['cmdb_id'], 'failure_type' : row['failure_type'] }
+
+    print('len(equal_kpi_list) = ' + str(len(equal_kpi_list)))
+    print('len(nonzero_kpi_list) = ' +  str(len(nonzero_kpi_list)))
+    print('len(nonzero_union_list) = ' +  str(len(nonzero_union_list)))
+    print(max_value_kpi_list)
 
 if __name__ == '__main__':
-    opts, args = getopt.getopt(sys.argv[1:], "m:h:", ["mode", "help"])
+    opts, args = getopt.getopt(sys.argv[1:], "m:h:f:", ["mode", "help", "folder"])
 
     for o, a in opts:
         if o in ("-h", "--help"):
             print("Usage: python3 moyu.py -m method")
         if o in ("-m", "--method"):
             PROCESS_METHOD = a
+        if o in ("-f", "--folder"):
+            PLOT_FOLDER = 'node'
 
     if PROCESS_METHOD == 'plotall':
-        plt_all_metrics()
+        plt_all_metrics(PLOT_FOLDER)
     elif PROCESS_METHOD == 'plotsingle':
         # 对比 Metric 并绘图
         plt_metrics()
     elif PROCESS_METHOD == 'stat':
         # 统计分析 metric 数据
         metric_stat()
+    elif PROCESS_METHOD == 'plotsub':
+        error_plt(PLOT_FOLDER)
 
 
     # 根据指标加载正常数据
