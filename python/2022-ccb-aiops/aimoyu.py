@@ -39,30 +39,30 @@ class DetectObject( object, metaclass = MetaClass):
     SERVICE_LIST = ['cartservice','productcatalogservice','recommendationservice','shippingservice','adservice','checkoutservice','frontend','currencyservice','emailservice','paymentservice']
     
     KPI_LIST = [ 
-        # {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "function_name" : 'threshold_detect', "parameter" : 60},
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "function_name" : 'threshold_detect', "parameter" : 60},
         # {"kpi_name":"system.cpu.pct_usage", "sample_time":120, "failure_type":"node节点CPU故障", "function_name" : 'maxmin_detect', "parameter" : 60},
-        {"kpi_name":"system.cpu.pct_usage", "sample_time":5, "failure_type":"node节点CPU故障", "function_name" : 'spike_detect', "parameter" : 60},
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":5, "failure_type":"node节点CPU故障", "function_name" : 'spike_detect', "parameter" : 60},
         # system.io.rkb_s 设备每秒读的 kibibytes 的数量
-        # {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'threshold_detect', "parameter" : 100000''},
-        # {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "function_name" : 'threshold_detect', "parameter" : '45'},
-        # {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "function_name" : 'threshold_detect', "parameter" : ''}
+        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'threshold_detect', "parameter" : 100000},
+        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "function_name" : 'threshold_detect', "parameter" : 198},
+        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "function_name" : 'threshold_detect', "parameter" : ''}
         ]
 
     SERVICE_KPI_LIST = [
         # > 20
         # {"kpi_name":"container_cpu_usage_seconds","sample_time":120},
         # > 500
-        # {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
+        {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
         # # # >= 0.8
-        # {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
+        {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
         # # # > 3000
-        # {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
+        {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
         # # # > 5000
-        # {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
         # # # > 95
-        # {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
         # # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
-        # {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器网络延迟"},
+        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器网络延迟"},
         # # # > 增量大于8
         # {"kpi_name" : "container_file_descriptors", "sample_time" : 10, "failure_type" : "k8s容器读io负载"},
 
@@ -116,6 +116,7 @@ SERVICE_FAILURE_TYPE = ['k8s容器cpu负载', 'k8s容器读io负载', 'k8s容器
 # dev 表示测试模式
 PROCESS_MODE = 'pro'
 
+SUBMIT_COUNT = 0
 
 # 将时间戳转换为可读时间格式
 def timestampFormat(timestamp):
@@ -200,7 +201,9 @@ def kafka_consumer():
 
 # 以文佳件方式消费数据
 def local_folder_consumer():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/node'
+    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/'
+
+    # metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/cloudbed-1/metric/container'
 
     for parent, dir_lists, file_lists in os.walk(metric_folder):
         for file_name in file_lists:
@@ -286,10 +289,10 @@ def data_process( data ):
 # apd , DetectObject 中初始化的 PD_LIST 对象
 # data , 需要处理的数据
 # silent_period 静默时间，探测到异常之后连续多长时间不上报
-def threshold_detect(apd, data, silent_period = 600):
+def threshold_detect(apd, data, silent_period = 1200):
     global SUBMIT_COUNT
 
-    if float(data['value']) > apd["parameter"]:
+    if float(data['value']) > float(apd["parameter"]):
         if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > silent_period:
             res = submit([data['cmdb_id'], apd["failure_type"] ])
             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
@@ -382,29 +385,17 @@ def adtk_common(data):
             apd["pd"] = validate_series( apd["pd"] )
 
             if data['kpi_name'] == 'system.io.rkb_s':
-                if data['cmdb_id'] == "node-6":
-                    return False
-
                 eval(apd["function_name"])(apd, data)
             elif data['kpi_name'] == 'system.io.await':
-                if float(data['value']) > 45:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
-                        res = submit([data['cmdb_id'], apd["failure_type"] ])
-                        log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
-                        log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
-                        log_message += 'Metric : ' + json.dumps(data) + '\n'
-                        submit_log(log_message)
-                        print(res)
-                        SUBMIT_COUNT += 1
-                        apd["prev_timestamp"] = data['timestamp']
+                eval(apd["function_name"])(apd, data)
             elif data['kpi_name'] == 'system.cpu.pct_usage':
                 eval(apd["function_name"])(apd, data)
             elif data['kpi_name'] == 'system.disk.pct_usage':
                 if data['cmdb_id'] == "node-6":
                     return False
 
-                if float(data['value']) - apd['pd']["value"][-2] > 2:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
+                if float(data['value']) - apd['pd']["value"][-2] > 5:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 1200:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -415,7 +406,7 @@ def adtk_common(data):
                         apd["prev_timestamp"] = data['timestamp']
                     
                 elif float(data['value']) - apd['pd']["value"][-3] > 2:
-                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
+                    if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 1200:
                         res = submit([data['cmdb_id'], apd["failure_type"] ])
                         log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                         log_message += 'Content: [' + data['cmdb_id'] + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -515,12 +506,12 @@ def adtk_common(data):
 
                             apd["prev_timestamp"] = data['timestamp']
                 elif data['kpi_name'] == 'container_fs_reads./dev/vda':
-                    if "payment" in data['cmdb_id']:
-                        return False
+                    # if "payment" in data['cmdb_id']:
+                    #     return False
 
                     # print(data)
-                    if float(data['value']) > 3000:
-                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
+                    if float(data['value']) > 20000:
+                        if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 3600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
                             log_message += 'Content: [' + cmdb_name + ', ' + apd["failure_type"] + '], Result: ' + res + '\n'
@@ -539,7 +530,7 @@ def adtk_common(data):
 
                             apd["prev_timestamp"] = data['timestamp']
                 elif data['kpi_name'] == 'container_memory_failures.container.pgmajfault':
-                    if float(data['value']) > 200:
+                    if float(data['value']) > 290:
                         if apd["prev_timestamp"] == 0 or int(data['timestamp']) - int(apd["prev_timestamp"]) > 600:
                             res = submit([cmdb_name, apd["failure_type"] ])
                             log_message = 'The ' + str(SUBMIT_COUNT) + ' Submit at ' + time.strftime('%Y%m%d%H%M', time.localtime(time.time())) + '\n'
