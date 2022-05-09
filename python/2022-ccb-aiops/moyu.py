@@ -378,7 +378,7 @@ def plt_multi_subs(df, tdf, max_sub = 16):
             ax = axes[x, y]
             ax.plot( xdf['timestamp'], xdf['value'])
             # ax.fill(1647823965, 2, 'red', alpha = 0.3)
-            ax.add_patch(patches.Rectangle((1647823965, 0), 100, xdf['value'].max(),facecolor="red",alpha=0.3))
+            ax.add_patch(patches.Rectangle((1647796830, 0), 120, xdf['value'].max(),facecolor="red",alpha=0.3))
             ax.set_title(xdf['cmdb_id'].iloc[1] + ':' + signle_kpi)
             y = y + 1
 
@@ -403,9 +403,9 @@ def plt_all_metrics(plot_folder = 'node'):
 
     truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
-    tdf = tdf[ ~ tdf['level'].str.contains('node')]
-    # tdf = tdf[ ~ tdf['level'].str.contains('pod')]
-    # tdf = tdf[ ~ tdf['level'].str.contains('service')]
+    # tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    tdf = tdf[ ~ tdf['level'].str.contains('pod')]
+    tdf = tdf[ ~ tdf['level'].str.contains('service')]
 
     # 需要忽略的 KPI
     ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
