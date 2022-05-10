@@ -63,6 +63,36 @@ def multi_line():
     plt.legend( loc = 'best' )
     plt.show()
 
+# 折线图标注数据点
+def line_with_dot():
+    df = pd.read_csv('data.csv')
+    # 只取一个 cmdb_id 值
+    df = df[ df['cmdb_id'].str.contains('node-1')]
+    # 只取一个 kpi_name 值
+    df = df[ df['kpi_name'].str.contains('system.load.5') ]
+    df.sort_values('timestamp')
+    
+    # df['value'].plot(x=df['timestamp'])
+    # plt.show()
+ 
+    colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
+
+    fig = plt.figure(figsize=(14,8))
+    plt.rcParams["figure.autolayout"] = True
+    plt.rcParams['font.sans-serif'] = ['Songti SC']
+    plt.rcParams['axes.unicode_minus'] = False
+
+    plt.plot(df['timestamp'], df['value'], c = colors[ 9 ], label='node-1')
+
+    # 故障点
+    plt.plot(1647823965, df['value'].max(), 'o')
+    plt.text(1647823965, df['value'].max() + 0.4, 'node-1,node节点CPU故障' , ha = 'left', va = 'top', fontsize = 8)
+
+    plt.xlabel( 'Timestamp' )
+    plt.ylabel( df['kpi_name'].iloc[1] )
+    plt.legend( loc = 'best' )
+    plt.show()    
+
 if __name__ == '__main__':
     opts, args = getopt.getopt(sys.argv[1:], "t:", ["type"])
     LINE_TYPE = ''
@@ -77,3 +107,5 @@ if __name__ == '__main__':
         single_line()
     elif LINE_TYPE == '2':
         multi_line()
+    elif LINE_TYPE == '3':
+        line_with_dot()
