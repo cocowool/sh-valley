@@ -30,6 +30,9 @@ def single_line():
     plt.legend( loc = 'best' )
     plt.show()
 
+# 画多折线图
+def multi_line():
+    pass
 
 if __name__ == '__main__':
     opts, args = getopt.getopt(sys.argv[1:], "t:", ["type"])
@@ -44,4 +47,4 @@ if __name__ == '__main__':
     if LINE_TYPE == '1':
         single_line()
     elif LINE_TYPE == '2':
-        pass
+        multi_line()
