@@ -35,10 +35,19 @@ class MetaClass( type ):
 #   
 # }]
 class ErrorPoint( object, metaclass = MetaClass):
-    EP_LIST = {}
+    EP_LIST = {
+        'common' : {
+            'start_time' : 0,
+            'submit_count' : 0,
+            'kpi_count' : 0
+        }
+    }
 
     def __init__(self):
         pass
+
+    def getInstance(self):
+        return self.EP_LIST
 
     def setKpi(self, kpi_name, data):
         self.EP_LIST[kpi_name] = data
@@ -291,7 +300,14 @@ def local_consumer(test_file):
 
 # 以批的方式处理指标数据，增加判断的准确性
 def batch_process( data ):
-    print(data)
+    ep_obj = ErrorPoint()
+    ep_inst = ep_obj.getInstance()
+
+    if ep_inst['common']['start_time'] == 0:
+        ep_inst['common']['start_time'] = data['timestamp']
+
+    print(ep_inst)
+    # print(data)
     # pass
 
 # 处理数据，按条接收并处理数据，屏蔽 Kafka 和本地文件的差异
