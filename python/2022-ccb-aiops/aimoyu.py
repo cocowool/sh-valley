@@ -27,6 +27,26 @@ class MetaClass( type ):
             self._instance = super(MetaClass, self).__call__(*args, **kwds)
         return self._instance
 
+# 用于 batch_process 的单例对象
+# 对象的格式约定
+# [ kpi_name : {
+#       normal_data: []
+#       anonamly_data : []
+#   
+# }]
+class ErrorPoint( object, metaclass = MetaClass):
+    EP_LIST = {}
+
+    def __init__(self):
+        pass
+
+    def setKpi(self, kpi_name, data):
+        self.EP_LIST[kpi_name] = data
+
+    def getKpi(self, kpi_name):
+        return self.EP_LIST[kpi_name]
+
+
 class DetectObject( object, metaclass = MetaClass):
     NODE_LIST = [
         "node-1",
@@ -269,6 +289,10 @@ def local_consumer(test_file):
 
     f.close()    
 
+# 以批的方式处理指标数据，增加判断的准确性
+def batch_process( data ):
+    print(data)
+    # pass
 
 # 处理数据，按条接收并处理数据，屏蔽 Kafka 和本地文件的差异
 # 记录开始处理的时间，记录处理的数据量
@@ -278,7 +302,9 @@ def data_process( data ):
     else:
         print(data)
 
-    adtk_common(data)
+    batch_process(data)
+
+    # adtk_common(data)
 
     # MERGE From Wanglei
     # maxmin_node_mem(data)
