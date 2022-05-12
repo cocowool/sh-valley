@@ -267,9 +267,9 @@ def error_plt( plot_folder = 'node' ):
     truth_file = DATA_FOLDER_PREFIX + '/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
 
     tdf = pd.read_csv( truth_file )
-    tdf = tdf[ ~ tdf['level'].str.contains('node')]
-    # tdf = tdf[ ~ tdf['level'].str.contains('pod')]
-    # tdf = tdf[ ~ tdf['level'].str.contains('service')]
+    # tdf = tdf[ ~ tdf['level'].str.contains('node')]
+    tdf = tdf[ ~ tdf['level'].str.contains('pod')]
+    tdf = tdf[ ~ tdf['level'].str.contains('service')]
 
     # 需要忽略的 KPI
     ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
@@ -337,11 +337,15 @@ def error_plt( plot_folder = 'node' ):
                     print(cmdb_list)
                     print(len(cmdb_list))
 
+                    for index, row in tdf.iterrows():
 
-                    for single_cmdb in cmdb_list:
-                        xdf = df[ df['cmdb_id'].str.contains(single_cmdb) ]
-
-                        plt_multi_subs(xdf, tdf)
+                        for single_cmdb in cmdb_list:
+                            print( row['cmdb_id'] + ' , ' + single_cmdb)
+                            if row['cmdb_id'] == single_cmdb:
+                                xdf = df[ df['cmdb_id'].str.contains(single_cmdb) ]
+                                plt_multi_subs(xdf, row)
+                            else:
+                                continue
                     # # 每个指标对应一张图，因此循环遍历 KPI_LIST
                     # for single_kpi in kpi_list:
                     #     if single_kpi in ignore_kpi_lists:
@@ -362,31 +366,36 @@ def error_plt( plot_folder = 'node' ):
                         # else:
                         #     pass
 
-def plt_multi_subs(df, tdf, max_sub = 16):
+def plt_multi_subs(df, tdf_row, max_sub = 16):
     colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
 
-    fig, axes = plt.subplots(2, 2, figsize=(16,8))
+    x = 0
+    y = 0
+    max_x = 2
+    max_y = 3
+
+    fig, axes = plt.subplots( max_x + 1, max_y + 1, figsize=(16,8))
     plt.rcParams["figure.autolayout"] = True
     plt.rcParams['font.sans-serif'] = ['Songti SC']
     plt.rcParams['axes.unicode_minus'] = False
 
-    x = 0
-    y = 0
-    max_x = 1
-    max_y = 1
 
-    kpi_lists =  df['kpi_name'].unique()
+    kpi_lists =  np.sort(df['kpi_name'].unique())
     for signle_kpi in kpi_lists:
         xdf = df[ df['kpi_name'].str.contains(signle_kpi) ]
 
         #@TODO 去掉零值
+        if xdf['value'].mean() == 0 or xdf['value'].std() == 0:
+            continue
 
         if x <= max_x and y <= max_y:
             print( str(x) + ',' + str(y))
+            # print(axes)
             ax = axes[x, y]
             ax.plot( xdf['timestamp'], xdf['value'])
             # ax.fill(1647823965, 2, 'red', alpha = 0.3)
-            ax.add_patch(patches.Rectangle((1647796830, 0), 120, xdf['value'].max(),facecolor="red",alpha=0.3))
+            ax.add_patch(patches.Rectangle((tdf_row['timestamp'], xdf['value'].min()), 120, xdf['value'].max(),facecolor="red",alpha=0.5))
+            ax.annotate( tdf_row['cmdb_id'] + ',' + tdf_row['failure_type'], xy=( tdf_row['timestamp'],xdf['value'].max()), xytext=(tdf_row['timestamp'] + 200, xdf['value'].max()) )
             ax.set_title(xdf['cmdb_id'].iloc[1] + ':' + signle_kpi)
             y = y + 1
 
@@ -395,9 +404,9 @@ def plt_multi_subs(df, tdf, max_sub = 16):
                 x = x + 1
 
             if x > max_x:
-                # print("xxxx")
                 plt.show()
-                fig, axes = plt.subplots(2, 2, figsize=(16,8))
+                # print("xxxx")
+                fig, axes = plt.subplots(max_x + 1, max_y + 1, figsize=(16,8))
                 plt.rcParams["figure.autolayout"] = True
                 plt.rcParams['font.sans-serif'] = ['Songti SC']
                 plt.rcParams['axes.unicode_minus'] = False
