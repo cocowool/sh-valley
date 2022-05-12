@@ -361,15 +361,16 @@ def error_plt( plot_folder = 'node' ):
 def plt_multi_subs(df, tdf_row, max_sub = 16):
     colors = ['red', 'blue', 'green', 'orange', 'black', 'purple', 'lime', 'magenta', 'cyan', 'maroon', 'teal', 'silver', 'gray', 'navy', 'pink', 'olive', 'rosybrown', 'brown', 'darkred', 'sienna', 'chocolate', 'seagreen', 'indigo', 'crimson', 'plum', 'hotpink', 'lightblue', 'darkcyan', 'gold', 'darkkhaki', 'wheat', 'tan', 'skyblue', 'slategrey', 'blueviolet', 'thistle', 'violet', 'orchid', 'steelblue', 'peru', 'lightgrey']
 
-    fig, axes = plt.subplots(2, 2, figsize=(16,8))
+    x = 0
+    y = 0
+    max_x = 2
+    max_y = 3
+
+    fig, axes = plt.subplots( max_x + 1, max_y + 1, figsize=(16,8))
     plt.rcParams["figure.autolayout"] = True
     plt.rcParams['font.sans-serif'] = ['Songti SC']
     plt.rcParams['axes.unicode_minus'] = False
 
-    x = 0
-    y = 0
-    max_x = 1
-    max_y = 1
 
     kpi_lists =  np.sort(df['kpi_name'].unique())
     for signle_kpi in kpi_lists:
@@ -380,7 +381,8 @@ def plt_multi_subs(df, tdf_row, max_sub = 16):
             continue
 
         if x <= max_x and y <= max_y:
-            # print( str(x) + ',' + str(y))
+            print( str(x) + ',' + str(y))
+            # print(axes)
             ax = axes[x, y]
             ax.plot( xdf['timestamp'], xdf['value'])
             # ax.fill(1647823965, 2, 'red', alpha = 0.3)
@@ -394,9 +396,9 @@ def plt_multi_subs(df, tdf_row, max_sub = 16):
                 x = x + 1
 
             if x > max_x:
-                # print("xxxx")
                 plt.show()
-                fig, axes = plt.subplots(2, 2, figsize=(16,8))
+                # print("xxxx")
+                fig, axes = plt.subplots(max_x + 1, max_y + 1, figsize=(16,8))
                 plt.rcParams["figure.autolayout"] = True
                 plt.rcParams['font.sans-serif'] = ['Songti SC']
                 plt.rcParams['axes.unicode_minus'] = False
