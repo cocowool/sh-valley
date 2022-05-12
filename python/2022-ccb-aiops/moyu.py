@@ -36,6 +36,8 @@ AVAILABLE_TOPICS = {
 # KPI 名称字典
 KPI_LISTS = []
 
+DATA_FOLDER_PREFIX = '/home/shiqiang/Documents/Projects/sh-valley/python/2022-ccb-aiops/aiops-data'
+
 # CONSUMER = KafkaConsumer(
 #     'kpi-1c9e9efe6847bc4723abd3640527cbe9',
 #     'metric-1c9e9efe6847bc4723abd3640527cbe9',
@@ -114,7 +116,7 @@ def service_check(file_name = ''):
 # 加载 groundtruth 数据到 pd 数据结构中
 def load_groundtruth():
     print("Load groundtruth data")
-    groundtruth_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth'
+    groundtruth_folder =  DATA_FOLDER_PREFIX + '/training_data_with_faults/groundtruth'
 
     out_file = 'all_groundtruth.csv'
 
@@ -134,7 +136,7 @@ def load_groundtruth():
 # * metric timestamp 第一列
 # * metric service timestamp 第二列
 def load_heads():
-    log_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1'
+    log_folder = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/cloudbed-1'
 
     # 故障时间点
     failure_timestamp = 1647754788
@@ -162,7 +164,7 @@ def load_heads():
 # 将正常的数据按指标输出
 def prepare_data():
     # 正常数据文件
-    file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv'
+    file_name = DATA_FOLDER_PREFIX + '/data_normal/cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv'
     f = open(file_name, 'r', encoding='utf-8')
     line = f.readline()
     normal_data = []
@@ -204,7 +206,7 @@ def failure_logs(file_name, find_level, failure_timestamp, timestamp_col):
 
 # 测试 ADTK 来验证时间序列
 def adtk_test():
-    file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
+    file_name = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/cloudbed-1/metric/node/kpi_cloudbed1_metric_0320.csv'
 
     # 正常数据文件
     # file_name = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv'
@@ -260,9 +262,10 @@ def random_colormap(N: int,cmaps_='gist_ncar',show_=False):
 # 画出故障点期间，多个指标的聚合图，每个指标一个子图
 # 从而来分析关联性
 def error_plt( plot_folder = 'node' ):
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/' + plot_folder
+    metric_folder = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/20220321/cloudbed-1/metric/' + plot_folder
 
-    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
+    truth_file = DATA_FOLDER_PREFIX + '/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
+
     tdf = pd.read_csv( truth_file )
     tdf = tdf[ ~ tdf['level'].str.contains('node')]
     # tdf = tdf[ ~ tdf['level'].str.contains('pod')]
@@ -272,9 +275,13 @@ def error_plt( plot_folder = 'node' ):
     ignore_kpi_lists = ['istio_requests.grpc.0.2.0', 'istio_requests.grpc.200.0.0', 'istio_requests.grpc.200.4.0', 'istio_requests.http.200.', 'istio_requests.http.202.', 'istio_requests.http.503.','istio_requests.grpc.200.14.0','istio_requests.http.200.14.0','istio_requests.grpc.200.9.0','istio_requests.http.200.9.0','istio_requests.grpc.200.13.0','istio_requests.http.200.13.0','istio_requests.grpc.200.2.0','istio_requests.http.302.','istio_requests.http.500.']
 
     df = pd.DataFrame()
-    for parent, dir_lists, file_lists in os.walk(metric_folder):
+    print(metric_folder)
+    for parent, dir_lists, file_lists in os.walk(metric_folder, followlinks=True):
+        print(file_lists)
         for file_name in file_lists:
+            # print('Test' + file_lists + '/' + file_name)
             if file_name.endswith('csv'):
+                print(file_name)
                 file_name = os.path.join(parent, file_name)
                 print(file_name)
                 # f = open(file_name, 'r', encoding='utf-8')
@@ -316,9 +323,10 @@ def error_plt( plot_folder = 'node' ):
 
                 elif 'kpi_' in file_name:
 
+                    print( file_name ) 
                     df = pd.read_csv( file_name  )
                     df = df.sort_values('timestamp') 
-                    # print(df)
+                    print(df)
                     # time.sleep(1)
 
                     kpi_list = df['kpi_name'].unique()
@@ -399,9 +407,9 @@ def plt_multi_subs(df, tdf, max_sub = 16):
 
 # 支持按照文件夹对文件夹内的文件进行画线
 def plt_all_metrics(plot_folder = 'node'):
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/' + plot_folder
+    metric_folder = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/20220321/cloudbed-1/metric/' + plot_folder
 
-    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
+    truth_file = DATA_FOLDER_PREFIX + '/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
     # tdf = tdf[ ~ tdf['level'].str.contains('node')]
     tdf = tdf[ ~ tdf['level'].str.contains('pod')]
@@ -586,8 +594,8 @@ def plt_dataframe( df, x_column, y_column, s_column, label_x_text, label_y_text,
 # 如果 cmdb_id 是 Pod 级别，拆分 service ，根据 service 相同的绘制到一张图，包含点
 # 目录结构说明：
 def plt_metrics():
-    normal_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/data_normal/'
-    faults_data_prefix = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/'
+    normal_data_prefix = DATA_FOLDER_PREFIX + '/data_normal/'
+    faults_data_prefix = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/'
 
     normal_data_lists = ['cloudbed-1/metric/node/kpi_cloudbed1_metric_0319.csv', 'cloudbed-2/metric/node/kpi_cloudbed2_metric_0319.csv', 'cloudbed-3/metric/node/kpi_cloudbed3_metric_0319.csv']
 
@@ -604,7 +612,7 @@ def plt_metrics():
     # istio 请求指标
     # test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/istio/kpi_istio_requests.csv'
 
-    test_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/cloudbed-1/metric/jvm/kpi_java_lang_OperatingSystem_SystemCpuLoad.csv'
+    test_file = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/cloudbed-1/metric/jvm/kpi_java_lang_OperatingSystem_SystemCpuLoad.csv'
 
     df = pd.read_csv( test_file )
     
@@ -622,7 +630,7 @@ def plt_metrics():
     # 0321 容器 IO 故障
     cloud_error = { 1647796830: 'productcatalogservice-2 , k8s read io error', 1647818816: 'adservice2-0 , k8s read io error', 1647850299: 'frontend-2 , k8s read io error'}
 
-    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
+    truth_file = DATA_FOLDER_PREFIX + '/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-20.csv'
     tdf = pd.read_csv( truth_file )
     tdf = tdf[ ~ tdf['level'].str.contains('node')]
     tdf = tdf[ ~ tdf['level'].str.contains('pod')]
@@ -681,9 +689,9 @@ def plt_metrics():
 # 统计在故障时点 10 分钟内，并且数值大于一天的 90% 的指标，汇总并打印列表。即：对每日指标数据求最大值，如时间戳与故障点时间戳之差在 10 分钟内，即打印。
 # 统计在故障点 10 分钟内，故障点后 5 个数值在每日样本中的排名
 def metric_stat():
-    metric_folder = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/tar/20220321/cloudbed-1/metric/'
+    metric_folder = DATA_FOLDER_PREFIX + '/training_data_with_faults/tar/20220321/cloudbed-1/metric/'
 
-    truth_file = '/Users/shiqiang/Downloads/2022-ccb-aiops/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
+    truth_file = DATA_FOLDER_PREFIX + '/training_data_with_faults/groundtruth/groundtruth-k8s-1-2022-03-21.csv'
     tdf = pd.read_csv( truth_file )
     # tdf = tdf[ ~ tdf['level'].str.contains('node')]
     # tdf = tdf[ ~ tdf['level'].str.contains('pod')]
