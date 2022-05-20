@@ -203,16 +203,25 @@ def submit(ctx):
 
 # Kafka 消费方法
 def kafka_consumer():
+    AVAILABLE_TOPICS = {
+        'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'trace-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'log-c8f21f1c53704f8040e8fd1eb17c4d01'
+    }
+
     CONSUMER = KafkaConsumer(
-        'kpi-1c9e9efe6847bc4723abd3640527cbe9',
-        # 'metric-1c9e9efe6847bc4723abd3640527cbe9',
-        # 'trace-1c9e9efe6847bc4723abd3640527cbe9',
-        # 'log-1c9e9efe6847bc4723abd3640527cbe9',
+        'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'trace-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'log-c8f21f1c53704f8040e8fd1eb17c4d01',
         bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
         auto_offset_reset='latest',
         enable_auto_commit=False,
         security_protocol='PLAINTEXT'
     )
+
+    assert AVAILABLE_TOPICS <= CONSUMER.topics(), 'Please contact admin'
 
     print("Begin Kafka Consuming")
     # i = 0
