@@ -8,6 +8,11 @@ from pandas import DataFrame, DatetimeIndex
 # 2. 区分指标，经过训练时间段后，开始进行异常数据的判断，将发现的异常数据压入队列
 # 3. 每个时间批次结束后，汇总指标异常的情况，判断是否有故障发生
 
+# 处理模式，调试用本地模式，部署用生产模式，默认为生产模式
+# pro 表示生产模式
+# dev 表示测试模式
+PROCESS_MODE = 'pro'
+
 # 定义一个单例通用对象，用于传入 kpi、检测方法、样本时间，以及保存指标的对象
 class MetaClass( type ):
     def __init__(self, name, bases, dict):
@@ -108,6 +113,39 @@ def kafka_consumer():
 def batch_process(data):
     pass
 
+# 将在线播放的数据按照天保存为文件
+def save_data( data ):
+    AVAILABLE_TOPICS = {
+        'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'trace-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'log-c8f21f1c53704f8040e8fd1eb17c4d01'
+    }
+
+    CONSUMER = KafkaConsumer(
+        'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'trace-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'log-c8f21f1c53704f8040e8fd1eb17c4d01',
+        bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
+        auto_offset_reset='latest',
+        enable_auto_commit=False,
+        security_protocol='PLAINTEXT'
+    )
+
+    assert AVAILABLE_TOPICS <= CONSUMER.topics(), 'Please contact admin'
+
+    i = 0
+    for message in CONSUMER:
+        i += 1
+        data = json.loads(message.value.decode('utf8'))
+        
+        print(type(data), data)
+        
+        
+        batch_process(data)
+        
+
 
 if __name__ == '__main__':
     print("2022 CCB AIOPS Match Round 2 by " + sys.argv[0])
@@ -121,5 +159,7 @@ if __name__ == '__main__':
 
     if PROCESS_MODE == 'dev':
         local_folder_consumer()
+    elif PROCESS_MODE == 'data':
+        save_data()
     else:
         kafka_consumer()
