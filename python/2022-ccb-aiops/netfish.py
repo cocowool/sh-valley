@@ -73,25 +73,36 @@ def local_folder_consumer():
                 elif 'kpi_' in file_name:
                     local_consumer(file_name)
 
+def local_consumer(file_name):
     pass
 
 # Kafka 消费方法
 def kafka_consumer():
+    AVAILABLE_TOPICS = {
+        'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'trace-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'log-c8f21f1c53704f8040e8fd1eb17c4d01'
+    }
+
     CONSUMER = KafkaConsumer(
-        'kpi-1c9e9efe6847bc4723abd3640527cbe9',
-        # 'metric-1c9e9efe6847bc4723abd3640527cbe9',
-        # 'trace-1c9e9efe6847bc4723abd3640527cbe9',
-        # 'log-1c9e9efe6847bc4723abd3640527cbe9',
+        'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'trace-c8f21f1c53704f8040e8fd1eb17c4d01',
+        'log-c8f21f1c53704f8040e8fd1eb17c4d01',
         bootstrap_servers=['10.3.2.41', '10.3.2.4', '10.3.2.36'],
         auto_offset_reset='latest',
         enable_auto_commit=False,
         security_protocol='PLAINTEXT'
     )
 
-    print("Begin Kafka Consuming")
+    assert AVAILABLE_TOPICS <= CONSUMER.topics(), 'Please contact admin'
+    print('test consumer')
+    i = 0
     for message in CONSUMER:
+        i += 1
         data = json.loads(message.value.decode('utf8'))
-        data = json.loads(data)
+        print(type(data), data)
         batch_process(data)
 
 def batch_process(data):
@@ -99,7 +110,7 @@ def batch_process(data):
 
 
 if __name__ == '__main__':
-    print("2022 CCB AIOPS Match by " + sys.argv[0])
+    print("2022 CCB AIOPS Match Round 2 by " + sys.argv[0])
     opts, args = getopt.getopt(sys.argv[1:], "m:h:", ["mode", "help"])
 
     for o, a in opts:
