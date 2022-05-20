@@ -114,7 +114,7 @@ def batch_process(data):
     pass
 
 # 将在线播放的数据按照天保存为文件
-def save_data( data ):
+def save_data( ):
     AVAILABLE_TOPICS = {
         'kpi-c8f21f1c53704f8040e8fd1eb17c4d01',
         'metric-c8f21f1c53704f8040e8fd1eb17c4d01',
@@ -142,10 +142,16 @@ def save_data( data ):
         
         print(type(data), data)
         
-        
-        batch_process(data)
-        
-
+        today = time.strftime("%Y-%m-%d", time.localtime() )
+        today_file = '/data/logs/aiops-data-' + today + '.log'
+        if os.path.exists( today_file):
+            f = open( today_file, 'a')
+            f.writelines(data + '\n' )
+            f.close()
+        else:
+            f = open( today_file, 'w')
+            f.writelines(data + '\n')
+            f.close()        
 
 if __name__ == '__main__':
     print("2022 CCB AIOPS Match Round 2 by " + sys.argv[0])
@@ -163,3 +169,4 @@ if __name__ == '__main__':
         save_data()
     else:
         kafka_consumer()
+
