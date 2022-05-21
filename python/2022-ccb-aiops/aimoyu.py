@@ -327,9 +327,9 @@ def data_process( data ):
     else:
         print(data)
 
-    batch_process(data)
+    # batch_process(data)
 
-    # adtk_common(data)
+    adtk_common(data)
 
     # MERGE From Wanglei
     # maxmin_node_mem(data)
