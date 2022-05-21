@@ -65,26 +65,57 @@ def local_folder_consumer():
 
     # 记录开始的时间戳
     start_timestamp = 0
+    # 用于存放 csv 生成的 pd 对象
+    pd_list = []
 
     for parent, dir_lists, file_lists in os.walk(metric_folder):
         for file_name in file_lists:
             if file_name.endswith('csv'):
                 file_name = os.path.join(parent, file_name)
-                print(file_name)
-                # f = open(file_name, 'r', encoding='utf-8')
-                # line = f.readline()
-                # f.close()
 
                 if 'trace_jaeger' in file_name:
+                    # df = pd.read_csv(file_name)
+                    # df = df.sort_values('timestamp')
+                    # pd_list.append(df)
                     pass
                 elif 'log_filebeat' in file_name:
+                    # df = pd.read_csv(file_name)
+                    # df = df.sort_values('timestamp')
+                    # pd_list.append(df)
                     pass
                 elif 'metric_service' in file_name:
+                    # df = pd.read_csv(file_name)
+                    # df = df.sort_values('timestamp')
+                    # pd_list.append(df)
                     pass
                 elif 'kpi_' in file_name:
-                    local_consumer(file_name)
+                    # print(file_name)
+                    df = pd.read_csv(file_name)
+                    df = df.sort_values('timestamp')
+                    pd_list.append(df)
+                    # local_consumer(file_name)
+
+    # 思路：找出时间戳的最小值、最大值，以时间作为递进值不断循环，循环中每次遍历所有的 pd_item
+    start_timestamp = pd_list[1]['timestamp'].min()
+    stop_timestamp = pd_list[1]['timestamp'].max()
+    current_timestamp = start_timestamp
+
+    while current_timestamp <= stop_timestamp:
+        for pd_item in pd_list:
+            sdf = pd_item[ pd_item['timestamp'] == current_timestamp ]
+
+            for index, row in sdf.iterrows():
+                batch_process(row.to_json())
+                
+        current_timestamp += 60
+
+def batch_process(data):
+    print(data)
+    pass
+
 
 def local_consumer(file_name):
+    # print( file_name )
     pass
 
 # Kafka 消费方法
@@ -115,9 +146,6 @@ def kafka_consumer():
         data = json.loads(message.value.decode('utf8'))
         print(type(data), data)
         batch_process(data)
-
-def batch_process(data):
-    pass
 
 # 将在线播放的数据按照天保存为文件
 def save_data( ):
