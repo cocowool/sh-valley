@@ -19,8 +19,24 @@ def compress_images(image_folder = ''):
 
 # Compress Single Image And Replace the original image
 # 压缩单张图片并替换保存
-def compress_single_image( image_path, in_replace = True ):
+# @TODO 小于一定大小的图片不处理；长度、宽度超过一定限度的，处理为适合 Web；默认为只压缩图片不缩放
+def compress_single_image( image_path, in_replace = True, quality = 60 ):
+    # Object Store Detail Inforamtion
+    c_obj = {}
+
+    original_size = os.path.getsize( image_path )
+    c_obj['original_size'] = original_size
+
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+    im = Image.open(image_path)
+    x, y = im.size
+    c_obj['img_x'] = x
+    c_obj['img_y'] = y
+
     print(image_path)
+    print(c_obj)
+    time.sleep(10)
     pass
 
 
