@@ -10,11 +10,16 @@ def compress_images(image_folder = ''):
         print("No Image Folder Given, Exit!")
         return
 
+    total_size = 0
     for parent, _, file_names in os.walk(image_folder):
         for file_name in file_names:
-            if file_name.endswith('jpg'):
+            if file_name.endswith(('jpg','bmp','png')):
                 file_name = os.path.join(parent, file_name)
-                compress_single_image(file_name)
+                image_info = compress_single_image(file_name)
+                if image_info:
+                    total_size += image_info['original_size']
+
+    print('Total size : ' + str(total_size))
 
 
 # Compress Single Image And Replace the original image
@@ -32,28 +37,33 @@ def compress_single_image( image_path, in_replace = True, quality = 60, size_sca
 
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    im = Image.open(image_path)
-    x, y = im.size
-    c_obj['img_x'] = x
-    c_obj['img_y'] = y
+    try:
+        im = Image.open(image_path)
+        x, y = im.size
+        c_obj['img_x'] = x
+        c_obj['img_y'] = y
 
-    # If image size is small, direct return
-    if original_size < image_size_threshold:
-        return
+        # If image size is small, direct return
+        if original_size < image_size_threshold:
+            return False
 
-    # If image is too wide, scale down
-    while x > image_x_threshold:
-        small_x = int(x * size_scale)
-        small_y = int(y * small_x / x)
-        c_obj['s_x'] = small_x
-        c_obj['s_y'] = small_y
+        # If image is too wide, scale down
+        while x > image_x_threshold:
+            small_x = int(x * size_scale)
+            small_y = int(y * small_x / x)
+            c_obj['s_x'] = small_x
+            c_obj['s_y'] = small_y
 
-        x = small_x
+            x = small_x
 
-    print(image_path)
-    print(c_obj)
-    # time.sleep(1)
-    pass
+        print(image_path)
+        print(c_obj)
+        # time.sleep(1)
+
+        return c_obj
+    except:
+        print("Image Read Error : " + image_path)
+        return False
 
 
 if __name__ == '__main__':
