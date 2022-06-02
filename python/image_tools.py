@@ -20,7 +20,10 @@ def compress_images(image_folder = ''):
 # Compress Single Image And Replace the original image
 # 压缩单张图片并替换保存
 # @TODO 小于一定大小的图片不处理；长度、宽度超过一定限度的，处理为适合 Web；默认为只压缩图片不缩放
-def compress_single_image( image_path, in_replace = True, quality = 60 ):
+def compress_single_image( image_path, in_replace = True, quality = 60, size_scale = 0.8 ):
+    image_x_threshold = 1024
+    image_size_threshold = 10240
+
     # Object Store Detail Inforamtion
     c_obj = {}
 
@@ -34,9 +37,22 @@ def compress_single_image( image_path, in_replace = True, quality = 60 ):
     c_obj['img_x'] = x
     c_obj['img_y'] = y
 
+    # If image size is small, direct return
+    if original_size < image_size_threshold:
+        return
+
+    # If image is too wide, scale down
+    while x > image_x_threshold:
+        small_x = int(x * size_scale)
+        small_y = int(y * small_x / x)
+        c_obj['s_x'] = small_x
+        c_obj['s_y'] = small_y
+
+        x = small_x
+
     print(image_path)
     print(c_obj)
-    time.sleep(10)
+    # time.sleep(1)
     pass
 
 
