@@ -7,6 +7,7 @@ import libimagequant as liq
 # Compress Images Under folder in place
 # 原地压缩替换某一文件夹下的图片文件
 def compress_images(image_input_folder = '', image_output_folder = False):
+    output_file_name = False
 
     if not image_input_folder:
         print("No Image Folder Given, Exit!")
@@ -24,7 +25,8 @@ def compress_images(image_input_folder = '', image_output_folder = False):
     compress_size = 0
     for parent, _, file_names in os.walk(image_input_folder):
         for file_name in file_names:
-            output_file_name = image_output_folder + file_name
+            if image_output_folder:
+                output_file_name = image_output_folder + file_name
             file_name = os.path.join(parent, file_name)
 
             if file_name.endswith(('jpg','bmp')):
@@ -42,14 +44,20 @@ def compress_images(image_input_folder = '', image_output_folder = False):
     print('Total compress size : ' + str(compress_size))
 
 
-def to_liq( image, attr):
+def to_liq( image, attr, scale_width = False, scale_height = False):
     if image.mode != 'RGBA':
         image = image.convert('RGBA')
 
-    return attr.create_rgba(image.tobytes(), image.width, image.height, image.info.get('gamma', 0))
+    if scale_width and scale_height:
+        return attr.create_rgba(image.tobytes(), scale_width, scale_height, image.info.get('gamma', 0))
+    else:
+        return attr.create_rgba(image.tobytes(), image.width, image.height, image.info.get('gamma', 0))
 
-def from_liq(result, image):
-    out_img = Image.frombytes('P', (image.width, image.height), result.remap_image(image))
+def from_liq(result, image, scale_width = False, scale_height = False):
+    if scale_width and scale_height:
+        out_img = Image.frombytes('P', (scale_width, scale_height), result.remap_image(image))
+    else:
+        out_img = Image.frombytes('P', (image.width, image.height), result.remap_image(image))
 
     palette_data = []
     for color in result.get_palette():
@@ -59,9 +67,14 @@ def from_liq(result, image):
     return out_img
 
 # Compress Png Image use libimagequant
-def compress_png_image( image_path, output_file_name = False, quality = 80):
+def compress_png_image( image_path, output_file_name = False, quality = 80, size_scale = 0.8):
+    image_x_threshold = 1024
+    image_size_threshold = 10240
+
     # Object Store Detail Inforamtion
     c_obj = {}
+    small_x = 0
+    small_y = 0
 
     original_size = os.path.getsize( image_path )
     c_obj['original_size'] = original_size
@@ -72,13 +85,26 @@ def compress_png_image( image_path, output_file_name = False, quality = 80):
         c_obj['img_x'] = x
         c_obj['img_y'] = y
 
+        while x > image_x_threshold:
+            small_x = int(x * size_scale)
+            small_y = int(y * small_x / x)
+            c_obj['s_x'] = small_x
+            c_obj['s_y'] = small_y
+
+            x = small_x
+            y = small_y
+
         attr = liq.Attr()
         liq_image = to_liq(im, attr)
         result = liq_image.quantize(attr)
         pil_image = from_liq(result, liq_image)
-        pil_image.save(output_file_name, optimize = True, quality = quality)
-        c_obj['compress_size'] = os.path.getsize(output_file_name)
 
+        if output_file_name:
+            pil_image.save(output_file_name, optimize = True, quality = quality)
+            c_obj['compress_size'] = os.path.getsize(output_file_name)
+        else:
+            pil_image.save(image_path, optimize = True, quality = quality)
+            c_obj['compress_size'] = os.path.getsize(image_path)
 
         print(image_path)
         print(c_obj)
