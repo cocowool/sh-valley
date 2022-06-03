@@ -46,10 +46,10 @@ def to_liq( image, attr):
     if image.mode != 'RGBA':
         image = image.convert('RGBA')
 
-        return attr.create_rgba(image.tobytes(), image.width, image.height, image.info.get('gamma', 0))
+    return attr.create_rgba(image.tobytes(), image.width, image.height, image.info.get('gamma', 0))
 
 def from_liq(result, image):
-    out_img = PIL.Image.frombytes('P', (image.width, image.height), result.remap_image(image))
+    out_img = Image.frombytes('P', (image.width, image.height), result.remap_image(image))
 
     palette_data = []
     for color in result.get_palette():
@@ -62,6 +62,9 @@ def from_liq(result, image):
 def compress_png_image( image_path, output_file_name = False, quality = 80):
     # Object Store Detail Inforamtion
     c_obj = {}
+
+    original_size = os.path.getsize( image_path )
+    c_obj['original_size'] = original_size
 
     try:
         im = Image.open(image_path)
@@ -82,8 +85,9 @@ def compress_png_image( image_path, output_file_name = False, quality = 80):
         # time.sleep(1)
 
         return c_obj
-    except:
+    except Exception as r:
         print("Compress Png Image Error : " + image_path)
+        print("Unknow Error : %s" %(r))
         return False
 
 # Compress Single Image And Replace the original image
