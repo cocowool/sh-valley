@@ -46,6 +46,36 @@ class ErrorPoint( object, metaclass = MetaClass):
         }
     }
 
+    KPI_LIST = [ 
+        {"kpi_name":"system.cpu.pct_usage", "sample_time":0, "failure_type":"node节点CPU故障", "function_name" : 'threshold_detect', "parameter" : 60},
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":120, "failure_type":"node节点CPU故障", "function_name" : 'maxmin_detect', "parameter" : 60},
+        # {"kpi_name":"system.cpu.pct_usage", "sample_time":5, "failure_type":"node节点CPU故障", "function_name" : 'spike_detect', "parameter" : 60},
+        # system.io.rkb_s 设备每秒读的 kibibytes 的数量
+        {"kpi_name":"system.io.rkb_s","sample_time":0, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'threshold_detect', "parameter" : 100000},
+        {"kpi_name":"system.io.rkb_s","sample_time":10, "failure_type":"node 磁盘读IO消耗" , "function_name" : 'adtk_detect', "parameter" : 100000},
+        {"kpi_name":"system.io.await","sample_time":0, "failure_type":"node 磁盘写IO消耗" , "function_name" : 'threshold_detect', "parameter" : 198},
+        {"kpi_name":"system.disk.pct_usage","sample_time":5, "failure_type":"node 磁盘空间消耗" , "function_name" : 'threshold_detect', "parameter" : ''}
+        ]
+
+    SERVICE_KPI_LIST = [
+        # > 20
+        # {"kpi_name":"container_cpu_usage_seconds","sample_time":120, "failure_type": ""},
+        # > 500
+        {"kpi_name":"container_cpu_cfs_throttled_seconds","sample_time":5, "failure_type" : "k8s容器cpu负载" },
+        # # # # >= 0.8
+        {"kpi_name":"container_network_receive_packets_dropped.eth0", "sample_time" : 5, "failure_type": "k8s容器网络资源包损坏"},
+        # # # # > 3000
+        {"kpi_name":"container_fs_writes_MB./dev/vda", "sample_time": 5, "failure_type": "k8s容器写io负载"},
+        # # # # > 5000
+        {"kpi_name" : "container_fs_reads./dev/vda", "sample_time" : 5, "failure_type" : "k8s容器读io负载"},
+        # # # # > 95
+        {"kpi_name" : "container_memory_failures.container.pgmajfault", "sample_time" : 5, "failure_type" : "k8s容器内存负载"},
+        # # # # istio_requests.grpc.200.0.0 > 3 , k8s容器网络延迟 , service
+        {"kpi_name" : "istio_requests.grpc.200.0.0", "sample_time" : 5, "failure_type" : "k8s容器网络延迟"},
+        # # # > 增量大于8
+        {"kpi_name" : "container_file_descriptors", "sample_time" : 10, "failure_type" : "k8s容器读io负载"},
+    ]
+
     def __init__(self):
         pass
 
@@ -79,10 +109,10 @@ def local_folder_consumer():
                     # pd_list.append(df)
                     pass
                 elif 'log_filebeat' in file_name:
-                    # df = pd.read_csv(file_name)
-                    # df = df.sort_values('timestamp')
-                    # pd_list.append(df)
-                    pass
+                    df = pd.read_csv(file_name)
+                    df = df.sort_values('timestamp')
+                    pd_list.append(df)
+                    # pass
                 elif 'metric_service' in file_name:
                     # df = pd.read_csv(file_name)
                     # df = df.sort_values('timestamp')
@@ -106,10 +136,22 @@ def local_folder_consumer():
 
             for index, row in sdf.iterrows():
                 batch_process(row.to_json())
-                
-        current_timestamp += 60
 
+        current_timestamp += 60
+# 四种文件类型的 标题行 
+# kpi_metric : timestamp,cmdb_id,kpi_name,value
+# metric_service : service,timestamp,rr,sr,mrt,count
+# log_filebeat : log_id,timestamp,cmdb_id,log_name,value
+# trace_jaeger : timestamp,cmdb_id,span_id,trace_id,duration,type,status_code,operation_name,parent_span
 def batch_process(data):
+    ep_obj = ErrorPoint()
+    ep_inst = ep_obj.getInstance()
+
+    if ep_inst['common']['start_time'] == 0:
+        ep_inst['common']['start_time'] = data['timestamp']
+
+    # print(ep_inst)
+
     print(data)
     pass
 

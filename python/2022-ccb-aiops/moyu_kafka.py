@@ -4,6 +4,8 @@ from kafka import KafkaConsumer
 import time
 import json
 
+
+
 CONSUMER = KafkaConsumer(
     # 'kpi-1c9e9efe6847bc4723abd3640527cbe9',
     'metric-1c9e9efe6847bc4723abd3640527cbe9',
