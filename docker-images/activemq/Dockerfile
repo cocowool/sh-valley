@@ -6,7 +6,8 @@ ADD jdk-8u144-linux-x64.tar.gz /usr/local
 #ADD apache-activemq-5.16.3-bin.tar.gz /usr/local
 ADD apache-activemq-5.8.0-bin.tar.gz /usr/local
 #ADD jetty.xml /usr/local/apache-activemq-5.16.3/conf/jetty.xml
-ADD jetty.xml /usr/local/apache-activemq-5.8.0/conf/jetty-5.8.0.xml
+ADD activemq-5.8.0.xml /usr/local/apache-activemq-5.8.0/conf/activemq.xml
+ADD jetty-5.8.0.xml /usr/local/apache-activemq-5.8.0/conf/jetty.xml
 # ADD start.sh /usr/local
 
 WORKDIR /usr/local
