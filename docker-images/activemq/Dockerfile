@@ -18,11 +18,12 @@ ENV PATH $JAVA_HOME/bin:$PATH:$ACTIVEMQ_HOME/bin
 ENV CLASSPATH .:$JAVA_HOME/lib
 
 EXPOSE 8161/tcp
-EXPOSE 61616/tcp
 EXPOSE 5672/tcp
+EXPOSE 61612/tcp
 EXPOSE 61613/tcp
-EXPOSE 1883/tcp
 EXPOSE 61614/tcp
+EXPOSE 61616/tcp
+EXPOSE 1883/tcp
 
 # ENTRYPOINT ["sh","/usr/local/apache-activemq-5.16.3/bin/activemq start"]
 #CMD [ "/usr/local/apache-activemq-5.16.3/bin/activemq", "console" ]
