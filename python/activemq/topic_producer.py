@@ -19,7 +19,7 @@ conn.connect('admin', 'admin', wait=True)
 while True:
     t=time.gmtime()
     msg=" hello  " + time.strftime("%Y-%m-%d %H:%M:%S",t)
-    conn.send(body=msg, destination='/queue/test', headers={'consumerId': 'qmsg_producer'})
+    conn.send(body=msg, destination='/topic/test', headers={'consumerId': 'topic_producer'})
     print(" send : " + msg)
     time.sleep(10)
 
