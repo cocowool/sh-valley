@@ -10,7 +10,7 @@ class MyListener(stomp.ConnectionListener):
     def on_message(self, frame):
         print('received a message "%s"' % frame.body)
 
-conn = stomp.Connection()
+conn = stomp.Connection( [('localhost',61613), ('localhost',61614)] )
 conn.set_listener('', MyListener())
 conn.connect('admin', 'admin', wait=True)
 conn.subscribe(destination='/topic/test', id=1, ack='auto')
