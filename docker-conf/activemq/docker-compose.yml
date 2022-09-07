@@ -1,15 +1,34 @@
 version: "2.1"
 services:
-  activemq-1:
-    image: cocowool/activemq:5.16.3
-    hostname: activemq
-    expose: 
+  activemq-A:
+    image: cocowool/activemq:5.8.0
+    hostname: activemq-A
+    expose:
       - "8161"
+      - "61613"
     ports:
       - "8161:8161"
+      - "61613:61613"
     volumes:
-      - ~/Projects/sh-valley/docker-conf/activemq/cocowool-activemq.xml:/usr/local/apache-activemq-5.16.3/conf/activemq.xml
-      - ~/Projects/sh-valley/docker-conf/activemq/jetty.xml:/usr/local/apache-activemq-5.16.3/conf/jetty.xml
+      - ~/Projects/sh-valley/docker-conf/activemq/activemq-5.8.0-A.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
+      - ~/Projects/sh-valley/docker-conf/activemq/kahadb:/usr/local/apache-activemq-5.8.0/data/kahadb
+      # - ~/Projects/sh-valley/docker-conf/activemq/jetty.xml:/usr/local/apache-activemq-5.16.3/conf/jetty.xml
+    #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
+    networks:
+      - default
+  activemq-B:
+    image: cocowool/activemq:5.8.0
+    hostname: activemq-B
+    expose:
+      - "8162"
+      - "61614"
+    ports:
+      - "8162:8161"
+      - "61614:61613"
+    volumes:
+      - ~/Projects/sh-valley/docker-conf/activemq/activemq-5.8.0-B.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
+      - ~/Projects/sh-valley/docker-conf/activemq/kahadb:/usr/local/apache-activemq-5.8.0/data/kahadb
+      # - ~/Projects/sh-valley/docker-conf/activemq/jetty.xml:/usr/local/apache-activemq-5.16.3/conf/jetty.xml
     #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
     networks:
       - default
