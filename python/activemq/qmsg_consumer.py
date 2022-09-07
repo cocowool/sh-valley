@@ -8,7 +8,8 @@ class MyListener(stomp.ConnectionListener):
         print('received an error "%s"' % frame.body)
 
     def on_message(self, frame):
-        print('received a message "%s"' % frame.body)
+        # print('received a message "%s"' % frame.body)
+        print(f"message: headers:{frame.headers['destination']}, message:{frame.body}")
 
 conn = stomp.Connection()
 conn.set_listener('', MyListener())
