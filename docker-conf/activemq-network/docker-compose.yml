@@ -17,22 +17,23 @@ services:
     networks:
       activemq-network:
         ipv4_address: 172.28.1.10
-  # activemq-network-1:
-  #   image: cocowool/activemq:5.8.0
-  #   hostname: activemq-network-1
-  #   expose:
-  #     - "8162"
-  #     - "61614"
-  #   ports:
-  #     - "8162:8161"
-  #     - "61614:61613"
-  #   volumes:
-  #     - ~/Projects/sh-valley/docker-conf/activemq/activemq-5.8.0-B.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
+  activemq-broker1:
+    image: cocowool/activemq:5.8.0
+    hostname: activemq-broker1
+    expose:
+      - "8162"
+      - "61614"
+    ports:
+      - "8162:8161"
+      - "61614:61613"
+    volumes:
+      - ~/Projects/sh-valley/docker-conf/activemq-network/activemq-5.8.0-B.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
   #     - ~/Projects/sh-valley/docker-conf/activemq/kahadb:/usr/local/apache-activemq-5.8.0/data/kahadb
   #     # - ~/Projects/sh-valley/docker-conf/activemq/jetty.xml:/usr/local/apache-activemq-5.16.3/conf/jetty.xml
   #   #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
-  #   networks:
-  #     - default
+    networks:
+      activemq-network:
+        ipv4_address: 172.28.1.20
 networks:
   activemq-network:
     ipam:
