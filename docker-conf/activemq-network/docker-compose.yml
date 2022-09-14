@@ -5,10 +5,10 @@ services:
     hostname: activemq-broker1
     expose:
       - "8161"
-      - "61613"
+      - "61611"
     ports:
       - "8161:8161"
-      - "61613:61613"
+      - "61611:61612"
     volumes:
       - ~/Projects/sh-valley/docker-conf/activemq-network/activemq-5.8.0-broker1.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
       # - ~/Projects/sh-valley/docker-conf/activemq/kahadb:/usr/local/apache-activemq-5.8.0/data/kahadb
@@ -16,16 +16,16 @@ services:
     #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
     networks:
       activemq-network:
-        ipv4_address: 172.28.1.10
+        ipv4_address: 172.28.1.11
   activemq-broker2:
     image: cocowool/activemq:5.8.0
     hostname: activemq-broker2
     expose:
       - "8162"
-      - "61617"
+      - "61612"
     ports:
       - "8162:8161"
-      - "61617:61617"
+      - "61612:61612"
     volumes:
       - ~/Projects/sh-valley/docker-conf/activemq-network/activemq-5.8.0-broker2.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
   #     - ~/Projects/sh-valley/docker-conf/activemq/kahadb:/usr/local/apache-activemq-5.8.0/data/kahadb
@@ -33,21 +33,21 @@ services:
   #   #   - ~/Projects/sh-valley/docker-conf/elasticstack/es-kibana/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
     networks:
       activemq-network:
-        ipv4_address: 172.28.1.11
+        ipv4_address: 172.28.1.12
   activemq-broker3:
     image: cocowool/activemq:5.8.0
     hostname: activemq-broker3
     expose:
       - "8163"
-      - "61618"
+      - "61613"
     ports:
       - "8163:8161"
-      - "61618:61618"
+      - "61613:61612"
     volumes:
       - ~/Projects/sh-valley/docker-conf/activemq-network/activemq-5.8.0-broker3.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
     networks:
       activemq-network:
-        ipv4_address: 172.28.1.12
+        ipv4_address: 172.28.1.13
 networks:
   activemq-network:
     ipam:

@@ -69,7 +69,7 @@
             Take a look at activemq-static_network-broker2.xml for example
         -->
         <networkConnectors>
-            <networkConnector uri="static:(tcp://172.28.1.10:61616)" duplex="true"/>
+            <networkConnector uri="static:(tcp://172.28.1.11:61616,tcp://172.28.1.13:61616)" duplex="true"/>
         </networkConnectors>
 
         <persistenceAdapter>
@@ -93,7 +93,10 @@
 
         <!-- The transport connectors ActiveMQ will listen to -->
         <transportConnectors>
-            <transportConnector name="openwire" uri="tcp://0.0.0.0:61618"/>
+            <transportConnector name="openwire" uri="tcp://0.0.0.0:61617?maximumConnections=1000&amp;wireformat.maxFrameSize=104857600"/>
+            <transportConnector name="amqp" uri="amqp://0.0.0.0:5672?maximumConnections=1000&amp;wireformat.maxFrameSize=104857600"/>
+            <transportConnector name="stomp" uri="stomp://0.0.0.0:61612?transport.closeAsync=false"/>
+            <transportConnector name="stomp+nio" uri="stomp+nio://0.0.0.0:61613?transport.closeAsync=false"/>
         </transportConnectors>
 
     </broker>
