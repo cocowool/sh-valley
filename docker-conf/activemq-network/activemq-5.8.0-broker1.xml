@@ -69,7 +69,7 @@
             Take a look at activemq-static_network-broker2.xml for example
         -->
         <networkConnectors>
-            <networkConnector uri="static:(tcp://172.28.1.12:61616,tcp://172.28.1.13:61616)" duplex="true"/>
+            <networkConnector uri="static:(tcp://172.28.1.12:61617,tcp://172.28.1.13:61617)" duplex="true"/>
         </networkConnectors>
 
         <persistenceAdapter>

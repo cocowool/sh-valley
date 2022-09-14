@@ -41,7 +41,7 @@
     <!-- Allows us to use system properties as variables in this configuration file -->
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
 
-    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="activemq-broker1" dataDirectory="${activemq.data}">
+    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="activemq-broker3" dataDirectory="${activemq.data}">
 
         <!-- Destination specific policies using destination names or wildcards -->
         <destinationPolicy>
@@ -69,7 +69,7 @@
             Take a look at activemq-static_network-broker2.xml for example
         -->
         <networkConnectors>
-            <networkConnector uri="static:(tcp://172.28.1.11:61616,tcp://172.28.1.12:61616)" duplex="true"/>
+            <networkConnector uri="static:(tcp://172.28.1.11:61617,tcp://172.28.1.12:61617)" duplex="true"/>
         </networkConnectors>
 
         <persistenceAdapter>
