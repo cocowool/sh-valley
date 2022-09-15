@@ -17,7 +17,7 @@ class MyListener(stomp.ConnectionListener):
         print('Disconnected...')
         # connect_and_subscribe(self.conn)
 
-conn = stomp.Connection([('localhost',61613), ('localhost',61614)], reconnect_sleep_initial=5, reconnect_sleep_increase=0.5, reconnect_sleep_jitter=0.1, reconnect_sleep_max=120.0, reconnect_attempts_max=10)
+conn = stomp.Connection([('localhost',61611)], reconnect_sleep_initial=5, reconnect_sleep_increase=0.5, reconnect_sleep_jitter=0.1, reconnect_sleep_max=120.0, reconnect_attempts_max=10)
 conn.set_listener('logicServerQueue', MyListener())
 # conn.start()
 conn.connect('admin', 'admin', wait=True)
