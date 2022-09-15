@@ -40,9 +40,11 @@ services:
     expose:
       - "8163"
       - "61613"
+      - "61617"
     ports:
       - "8163:8161"
       - "61613:61612"
+      - "61617:61617"
     volumes:
       - ~/Projects/sh-valley/docker-conf/activemq-network/activemq-5.8.0-broker3.xml:/usr/local/apache-activemq-5.8.0/conf/activemq.xml
     networks:
