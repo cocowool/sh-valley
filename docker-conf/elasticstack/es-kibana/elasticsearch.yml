@@ -15,8 +15,10 @@ bootstrap.system_call_filter: false
 
 xpack.security.enabled: true
 xpack.monitoring.collection.enabled: true
-# 可以设置 xpack 采集性能数据的索引范围，即仅对列表中的索引进行数据采集
+# 可选参数，可以设置 xpack 采集性能数据的索引范围，即仅对列表中的索引进行数据采集
 # xpack.monitoring.collection.indices: logstash-*, index1, test2
+# 可选参数，设置数据采集的周期，默认为 10 秒
+# xpack.monitoring.collection.interval: 5
 
 # logger.org.elasticsearch.transport: trace
 
