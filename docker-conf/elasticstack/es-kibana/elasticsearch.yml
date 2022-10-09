@@ -2,16 +2,12 @@ cluster.name: elasticsearch-single
 node.name: elasticsearch
 network.bind_host: 0.0.0.0
 
-node.master: true
-node.data: true
-
 #内存参数
 indices.memory.index_buffer_size: 20%
 #indices.memory.min_index_buffer_size: 64mb
 #indices.memory.max_index_buffer_size: 256mb
 
 bootstrap.memory_lock: false
-bootstrap.system_call_filter: false
 
 xpack.security.enabled: true
 xpack.monitoring.collection.enabled: true
@@ -22,10 +18,9 @@ xpack.monitoring.collection.enabled: true
 
 # logger.org.elasticsearch.transport: trace
 
-# 这个配置是 7.0 新加入的参数，如果使用低于 7.0 的版本需要注释掉
-# cluster.initial_master_nodes: 127.0.0.1
-
+# ------------------------------------------------------
 # 从5.x 版本以后，慢查询日志只能设置在索引级别，无法设置全局的阈值
+# ------------------------------------------------------
 # # 记录获取慢日志
 # index.search.slowlog.threshold.fetch.warn: 1s
 # index.search.slowlog.threshold.fetch.info: 200ms
@@ -42,3 +37,16 @@ xpack.monitoring.collection.enabled: true
 # index.search.slowlog.threshold.index.trace: 500ms
 # index.search.slowlog.level: trace
 # index.search.slowlog.source: 1000
+
+# ------------------------------------------------------
+# 这个配置是 7.0 新加入的参数，如果使用低于 7.0 的版本需要注释掉
+# ------------------------------------------------------
+# cluster.initial_master_nodes: 127.0.0.1
+
+# ------------------------------------------------------
+# 测试发现 8.4.0 版本后这两个参数也不支持，暂时关闭
+# ------------------------------------------------------
+# node.master: true
+# node.data: true
+
+# bootstrap.system_call_filter: false
