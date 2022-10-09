@@ -5,8 +5,6 @@ network.bind_host: 0.0.0.0
 node.master: true
 node.data: true
 
-cluster.initial_master_nodes: 127.0.0.1
-
 #内存参数
 indices.memory.index_buffer_size: 20%
 #indices.memory.min_index_buffer_size: 64mb
@@ -15,9 +13,15 @@ indices.memory.index_buffer_size: 20%
 bootstrap.memory_lock: false
 bootstrap.system_call_filter: false
 
+xpack.security.enabled: true
 xpack.monitoring.collection.enabled: true
+# 可以设置 xpack 采集性能数据的索引范围，即仅对列表中的索引进行数据采集
+# xpack.monitoring.collection.indices: logstash-*, index1, test2
 
 # logger.org.elasticsearch.transport: trace
+
+# 这个配置是 7.0 新加入的参数，如果使用低于 7.0 的版本需要注释掉
+# cluster.initial_master_nodes: 127.0.0.1
 
 # 从5.x 版本以后，慢查询日志只能设置在索引级别，无法设置全局的阈值
 # # 记录获取慢日志
