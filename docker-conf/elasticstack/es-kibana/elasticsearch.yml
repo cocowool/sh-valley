@@ -46,7 +46,7 @@ xpack.monitoring.collection.enabled: true
 # ------------------------------------------------------
 # 测试发现 8.4.0 版本后这两个参数也不支持，暂时关闭
 # ------------------------------------------------------
-# node.master: true
-# node.data: true
+node.master: true
+node.data: true
 
-# bootstrap.system_call_filter: false
+bootstrap.system_call_filter: false
