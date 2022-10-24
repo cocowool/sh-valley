@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-# import pickle
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 # from sklearn import train_test_split
