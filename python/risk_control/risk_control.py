@@ -45,6 +45,45 @@ def onehot_encode( df, data_path_1, flag = 'train'):
             pickle.dump(enc, save_model, 0)
             save_model.close()
 
+            df_return = pd.DataFrame( enc.transform(df).toarray())
+            df_return.columns = enc.get_feture_names(df.columns)
+        elif flag == 'test':
+            # 测试数据编码
+            read_model = open(os.path.join(data_path_1, 'onehot.pkl'), 'rb')
+            onehot_model = pickle.lod(read_model)
+            read_model.close()
+
+            # 如果训练集无缺失值，测试集有缺失值，则将该样本删除
+            var_range = onehot_model.categories_
+            var_name = df.columns
+            del_index = []
+
+            for i in range(len(var_range)):
+                if 'NA' not in var_range[i] and 'NA' in df[var_name[i]].unique():
+                    index = np.where( df[var_name[i] == 'NA'])
+                    del_index.append(index)
+                elif -7777 not in var_range[i] and -7777 in df[var_name[i]].unique():
+                    index = np.where( df[var_name[i]] == -7777)
+                    del_index.append(index)
+
+                # 删除样本
+                if len(del_index) > 0:
+                    del_index = np.unique(del_index)
+                    df = df.drop(del_index)
+                    print('训练集无缺失值，但测试集有缺失值，第 {0} 条昂本被删除'.format(del_index))
+                    df_return = pd.DataFrame(onehot_model.transform(df).toarray())
+                    df_return.columns = onehot_model.get_feture_names(df.columns)
+        elif flag == 'transform':
+            # 编码数值转化为原始变量
+            read_model = open(os.path.join(data_path_1, 'onehot.pkl'),'rb')
+            onehot_model = pickle.load(read_model)
+            read_model.close()
+
+            df_return = pd.DataFrame( onehot_model.inverse_transform(df) )
+            df_return.columns = np.unique( ['_'.join(i.rsplit('_')[:-1]) for i in df.columns  ])
+
+        return df_return
+
 data_path = '/Users/shiqiang/Projects/sh-valley/python/risk_control/datasets'
 file_name = 'GermanData.csv'
 
