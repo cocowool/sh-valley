@@ -2,40 +2,52 @@ version: "2.1"
 services:
     httpd-10:
         image: httpd:2.4.54-alpine3.16
+        expose:
+          - "80"
         ports:
             - "1380:80"
-        # volumes: 
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf.d:/etc/nginx/conf.d
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/logs:/var/log/nginx
+        volumes: 
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/index_10.html:/usr/local/apache2/htdocs/index.html
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/httpd_10.conf:/usr/local/apache2/conf/httpd.conf
         networks:
             test-network:
                 ipv4_address: 172.136.0.10
     httpd-11:
         image: httpd:2.4.54-alpine3.16
+        expose:
+          - "80"
         ports:
             - "1381:80"
-        # volumes: 
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf.d:/etc/nginx/conf.d
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/logs:/var/log/nginx
+        volumes: 
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/index_11.html:/usr/local/apache2/htdocs/index.html
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/httpd_11.conf:/usr/local/apache2/conf/httpd.conf
         networks:
             test-network:
                 ipv4_address: 172.136.0.11
     httpd-12:
         image: httpd:2.4.54-alpine3.16
+        expose:
+          - "80"
         ports:
             - "1382:80"
-        # volumes: 
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf.d:/etc/nginx/conf.d
-        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/logs:/var/log/nginx
+        volumes: 
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/index_12.html:/usr/local/apache2/htdocs/index.html
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/httpd_12.conf:/usr/local/apache2/conf/httpd.conf
         networks:
             test-network:
                 ipv4_address: 172.136.0.12
+    httpd-13:
+        image: httpd:2.4.54-alpine3.16
+        expose:
+          - "80"
+        ports:
+            - "1383:80"
+        volumes: 
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/index_13.html:/usr/local/apache2/htdocs/index.html
+            - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/httpd_13.conf:/usr/local/apache2/conf/httpd.conf
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.13
 networks: 
     test-network:
         ipam:
