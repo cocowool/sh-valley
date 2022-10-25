@@ -4,8 +4,10 @@ services:
         image: httpd:2.4.54-alpine3.16
         expose:
           - "80"
+          - "1390"
         ports:
             - "1380:80"
+            - "1390:1390"
         volumes: 
             - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/index_10.html:/usr/local/apache2/htdocs/index.html
             - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/httpd_10.conf:/usr/local/apache2/conf/httpd.conf
