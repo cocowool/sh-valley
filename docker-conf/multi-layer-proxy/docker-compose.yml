@@ -1,0 +1,44 @@
+version: "2.1"
+services:
+    httpd-10:
+        image: httpd:2.4.54-alpine3.16
+        ports:
+            - "1380:80"
+        # volumes: 
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf.d:/etc/nginx/conf.d
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/logs:/var/log/nginx
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.10
+    httpd-11:
+        image: httpd:2.4.54-alpine3.16
+        ports:
+            - "1381:80"
+        # volumes: 
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf.d:/etc/nginx/conf.d
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/logs:/var/log/nginx
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.11
+    httpd-12:
+        image: httpd:2.4.54-alpine3.16
+        ports:
+            - "1382:80"
+        # volumes: 
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/www:/usr/share/nginx/html
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf:/etc/nginx/conf
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/conf.d:/etc/nginx/conf.d
+        #     - ~/Projects/sh-valley/docker-conf/lnmp/nginx/logs:/var/log/nginx
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.12
+networks: 
+    test-network:
+        ipam:
+            config:
+            - subnet: 172.136.0.0/16
+              gateway: 172.136.0.1
