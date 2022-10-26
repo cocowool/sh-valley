@@ -1,5 +1,38 @@
 version: "2.1"
 services:
+    nginx-20:
+        image: nginx:1.19
+        expose:
+          - "80"
+        ports:
+          - "2380:80"
+        volumes:
+          - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/nginx_20.conf:/etc/nginx/nginx.conf
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.20
+    nginx-21:
+        image: nginx:1.19
+        expose:
+          - "80"
+        ports:
+          - "2381:80"
+        volumes:
+          - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/nginx_21.conf:/etc/nginx/nginx.conf
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.21
+    nginx-22:
+        image: nginx:1.19
+        expose:
+          - "80"
+        ports:
+          - "2382:80"
+        volumes:
+          - ~/Projects/sh-valley/docker-conf/multi-layer-proxy/nginx_22.conf:/etc/nginx/nginx.conf
+        networks:
+            test-network:
+                ipv4_address: 172.136.0.22
     httpd-10:
         image: httpd:2.4.54-alpine3.16
         expose:
