@@ -68,7 +68,7 @@ def onehot_encode( df, data_path_1, flag = 'train'):
             if 'NA' not in var_range[i] and 'NA' in df[var_name[i]].unique():
                 index = np.where( df[var_name[i]] == 'NA')
                 del_index.append(index)
-            elif -7777 not in var_range[i] and -7777 in df[var_name[i]].unique():
+            elif '-7777' not in var_range[i] and '-7777' in df[var_name[i]].unique():
                 index = np.where( df[var_name[i]] == -7777)
                 del_index.append(index)
 
@@ -77,10 +77,10 @@ def onehot_encode( df, data_path_1, flag = 'train'):
             del_index = np.unique(del_index)
             df = df.drop(del_index)
 
-            print('训练集无缺失值，但测试集有缺失值，第 {0} 条昂本被删除'.format(del_index))
+            print('训练集无缺失值，但测试集有缺失值，第 {0} 条样本被删除'.format(del_index))
 
         df_return = pd.DataFrame(onehot_model.transform(df).toarray())
-        df_return.columns = onehot_model.get_feture_names(df.columns)
+        df_return.columns = onehot_model.get_feature_names(df.columns)
     elif flag == 'transform':
         # 编码数值转化为原始变量
         read_model = open(os.path.join(data_path_1, 'onehot.pkl'),'rb')
@@ -319,6 +319,7 @@ if __name__ == '__main__':
 
     # 读取数据
     data_train, data_test = data_read(data_path,file_name)
+    # print(data_train)
 
     # 不可排序变量
     var_no_order = ['credit_history','purpose', 'personal_status', 'other_debtors',
