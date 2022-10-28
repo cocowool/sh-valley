@@ -66,7 +66,7 @@ def onehot_encode( df, data_path_1, flag = 'train'):
 
         for i in range(len(var_range)):
             if 'NA' not in var_range[i] and 'NA' in df[var_name[i]].unique():
-                index = np.where( df[var_name[i] == 'NA'])
+                index = np.where( df[var_name[i]] == 'NA')
                 del_index.append(index)
             elif -7777 not in var_range[i] and -7777 in df[var_name[i]].unique():
                 index = np.where( df[var_name[i]] == -7777)
