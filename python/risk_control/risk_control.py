@@ -15,7 +15,18 @@ def data_read(data_path, file_name):
     # df = pd.read_csv(os.path.join(data_path, file_name), delim_whitespace= True, header = None, sep=',')
     # 原书中代码为上面一行，因为我找到的数据集是逗号分隔，修改为下面
     df = pd.read_csv(os.path.join(data_path, file_name),  header = None, sep=',')
-    columns = ['status_account', 'duration', 'credit_history', 'purpose', 'amount', 'svaing_account', 'present_emp', 'income_rate', 'personal_status', 'other_debtors', 'residence_info', 'property', 'age', 'inst_plans', 'housing', 'num_credits', 'job', 'dependents', 'telephone', 'foreign_worker', 'target']
+    
+    # columns = ['status_account','duration','credit_history','purpose','amount', 
+    #            'svaing_account','present_emp','income_rate','personal_status',
+    #            'other_debtors','residence_info', 'property', 'age',
+    #            'inst_plans', 'housing', 'num_credits',
+    #            'job', 'dependents', 'telephone', 'foreign_worker', 'target']
+
+    columns = ['status_account','duration','credit_history','purpose', 'amount',
+               'svaing_account', 'present_emp', 'income_rate', 'personal_status',
+               'other_debtors', 'residence_info', 'property', 'age',
+               'inst_plans', 'housing', 'num_credits',
+               'job', 'dependents', 'telephone', 'foreign_worker', 'target']
 
     df.columns = columns
     df.target = df.target - 1
@@ -327,17 +338,21 @@ if __name__ == '__main__':
 
     # one-hot编码
     # 训练数据编码
+    # print(data_train.credit_history[882])
     data_train.credit_history[882] = np.nan
     data_train_encode = onehot_encode(data_train[var_no_order],data_path,flag='train')
+    # print(data_train_encode)
    
     # 测试集数据编码
     data_test.credit_history[529] = np.nan
     data_test.purpose[355] = np.nan
     data_test_encode = onehot_encode(data_test[var_no_order],data_path,flag='test')
+    # print(data_test_encode)
 
     # 查看编码逆变化后的原始变量名
     df_encoded = data_test_encode.loc[0:4]
     data_inverse = onehot_encode(df_encoded,data_path,flag='transform')
+    # print(data_inverse)
 
     # 哑变量编码
     data_train_dummies =  pd.get_dummies(data_train[var_no_order])
@@ -372,6 +387,6 @@ if __name__ == '__main__':
 
     # WOE编码
     # 训练集WOE编码
-    df_train_woe, dict_woe_map, dict_iv_values ,var_woe_name = woe_encode(data_train,data_path,var_no_order, data_train.target, 'dict_woe_map',flag='train')
+    # df_train_woe, dict_woe_map, dict_iv_values ,var_woe_name = woe_encode(data_train,data_path,var_no_order, data_train.target, 'dict_woe_map',flag='train')
     # 测试集WOE编码
-    df_test_woe, var_woe_name = woe_encode(data_test,data_path,var_no_order, data_train.target, 'dict_woe_map',flag='test')
+    # df_test_woe, var_woe_name = woe_encode(data_test,data_path,var_no_order, data_train.target, 'dict_woe_map',flag='test')
