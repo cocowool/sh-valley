@@ -24,6 +24,7 @@ Docker 使得我们在本地配置一些测试环境变得非常容易，而且�
 
 * [统计某个文件夹下（包含子目录）某种类型文件所占的空间大小](http://www.edulinks.cn/2021/09/04/20210903-linux-count-file-shell/)
 * [Shell 函数带中横线问题排查](http://www.edulinks.cn/2022/02/24/20220224-shell-function-with-hyphen/)
+* [换行符引起的脚本执行问题](http://www.edulinks.cn/2023/02/10/20230210-dos2unix/)
 
 ## Java 相关案例
 
