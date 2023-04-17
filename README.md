@@ -29,6 +29,7 @@ Docker 使得我们在本地配置一些测试环境变得非常容易，而且�
 ## Java 相关案例
 
 * [Metrics包的使用方法](https://www.cnblogs.com/cocowool/p/java_metrics.html)
+* [将Springboot工程部署在Weblogic容器上](http://www.edulinks.cn/2023/04/04/20230404-weblogic-intro/)
 
 ## Kafka 相关案例
 
