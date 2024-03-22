@@ -19,6 +19,7 @@ Python 开发快速，因此日常一些问题可以使用 Python 快速解决�
 Docker 使得我们在本地配置一些测试环境变得非常容易，而且非常节省资源。本列表提供基于 Docker 快速搭建各种环境的文章。
 
 * [基于Docker快速构建Redis主从模式集群](http://edulinks.cn/2021/02/27/20210301-docker-redis/)
+* [快速启动一个容器化Kafka](http://www.edulinks.cn/2024/03/15/20240315-run-kafka-in-docker/)
 
 ## Shell 相关脚本
 
